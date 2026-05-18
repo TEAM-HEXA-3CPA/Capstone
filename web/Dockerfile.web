@@ -12,7 +12,9 @@ RUN pip install fastapi uvicorn \
     ultralytics \
     boto3 \
     AWSIoTPythonSDK \
-    numpy
+    numpy \
+    mediapipe
+
 
 COPY . .
 
