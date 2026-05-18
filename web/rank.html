@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Study | 랭킹 대시보드</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+</head>
+<body>
+
+<header>
+    <a href="main-home.html" class="logo" style="text-decoration: none;">Deep Study</a>
+    <nav>
+        <a href="control.html">집중분석</a>
+        <a href="report.html">리포트</a>
+        <a href="rank.html" style="color: var(--primary); font-weight: 800;">전체랭킹</a>
+        <a href="index.html">로그인</a>
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
+    </nav>
+</header>
+
+<div class="container">
+    <section id="rank">
+        <div class="my-stats-banner">
+            <div>
+                <span style="opacity: 0.8; font-size: 0.9rem;">나의 현재 상태</span>
+                <h3 style="font-size: 1.8rem;">전체 14위 / 그룹 내 2위</h3>
+            </div>
+            <div style="text-align: right;">
+                <span style="opacity: 0.8; font-size: 0.9rem;">누적 학습 점수</span>
+                <h3 style="font-size: 1.8rem;">15,420 pts</h3>
+            </div>
+        </div>
+
+        <div class="rank-grid">
+            <div class="card">
+                <h3>🏆 전체 실시간 랭킹 TOP 5</h3>
+                <table class="rank-table">
+                    <thead><tr><th>순위</th><th>닉네임</th><th>몰입 점수</th><th>총 시간</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color:gold; font-weight:900;">1</td><td>열공하는곰</td><td>45,200</td><td>142h</td></tr>
+                        <tr><td style="color:silver; font-weight:900;">2</td><td>몰입요정</td><td>42,100</td><td>120h</td></tr>
+                        <tr><td style="color:cd7f32; font-weight:900;">3</td><td>AI마스터</td><td>40,050</td><td>115h</td></tr>
+                        <tr><td>4</td><td>새벽반고래</td><td>38,200</td><td>98h</td></tr>
+                        <tr><td>5</td><td>체어맨</td><td>35,400</td><td>92h</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>👥 우리 그룹 랭킹 (<span style="color:var(--primary); font-weight:700;">캡스톤 A팀</span>)</h3>
+                    <a href="create-group.html" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 700; border: 1px solid var(--primary); padding: 6px 12px; border-radius: 20px;">+ 새 그룹 만들기</a>
+                </div>
+                <table class="rank-table" style="margin-top: 0;">
+                    <thead><tr><th>순위</th><th>이름</th><th>몰입 점수</th><th>오늘 공부</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color:gold; font-weight:900;">1</td><td>김철수</td><td>8,450</td><td>5h 20m</td></tr>
+                        <tr><td style="color:silver; font-weight:900;">2</td><td>나 (StudyMaster)</td><td>7,210</td><td>4h 15m</td></tr>
+                        <tr><td style="color:cd7f32; font-weight:900;">3</td><td>이영희</td><td>6,800</td><td>3h 50m</td></tr>
+                        <tr><td>4</td><td>최미희</td><td>5,200</td><td>2h 10m</td></tr>
+                        <tr><td>5</td><td>박민수</td><td>4,150</td><td>1h 45m</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Study | 집중분석</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+</head>
+<body>
+
+<header>
+    <a href="main-home.html" class="logo" style="text-decoration: none;">Deep Study</a>
+    <nav>
+        <a href="control.html" style="color: var(--primary); font-weight: 800;">집중분석</a>
+        <a href="report.html">리포트</a>
+        <a href="rank.html">전체랭킹</a>
+        <a href="index.html">로그인</a>
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
+    </nav>
+</header>
+
+<div class="container">
+    <section id="control">
+        <div style="margin-bottom: 30px;">
+            <h2>AI 몰입 엔진</h2>
+            <p style="color:var(--text-sub)">라즈베리 파이 카메라가 시선과 자세를 실시간 분석합니다.</p>
+        </div>
+        <div class="camera-grid">
+            <div class="camera-view" id="camFeed">
+                <p>대기 모드</p>
+                <span style="font-size: 0.8rem; opacity: 0.5;">분석 시작 버튼을 눌러주세요</span>
+            </div>
+            <div class="control-panel">
+                <button class="btn btn-primary" style="background:#1e293b" onclick="startAI()">분석 실행 시작</button>
+                <button class="btn" style="background:#ef4444; color:white;" onclick="stopAI()">완전히 종료</button>
+                <div class="sys-msg-box">
+                    <h4 style="color: var(--primary); margin-bottom: 8px;">시스템 메시지</h4>
+                    <p id="msg-text" style="font-size: 0.9rem; line-height: 1.5;">사용자 인증 완료. 카메라 정면을 응시하고 챌린지를 활성화해 주세요.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

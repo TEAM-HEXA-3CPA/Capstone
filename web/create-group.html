@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Study | 스터디 그룹 만들기</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+</head>
+<body>
+
+<header>
+    <a href="main-home.html" class="logo" style="text-decoration: none;">Deep Study</a>
+    <nav>
+        <a href="control.html">집중분석</a>
+        <a href="report.html">리포트</a>
+        <a href="rank.html">전체랭킹</a>
+        <a href="index.html">로그인</a>
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
+    </nav>
+</header>
+
+<div class="container">
+    <section id="create-group">
+        <div class="auth-card card">
+            <div class="auth-info">
+                <h2>새로운 스터디<br>그룹 만들기</h2>
+                <p style="color:var(--text-sub)">팀원들을 모으고 함께 실시간 몰입 경쟁을 시작해 보세요.</p>
+                <div style="margin-top: 30px;"><a href="rank.html" style="color: var(--text-sub); text-decoration: none; font-size: 0.9rem;">← 랭킹 대시보드로 돌아가기</a></div>
+            </div>
+            <form id="groupForm">
+                <div class="input-group"><label>그룹 이름</label><input type="text" id="groupName" placeholder="예: 캡스톤 디자인 A팀"></div>
+                <div class="input-group"><label>그룹 한 줄 소개</label><input type="text" placeholder="그룹의 목표를 적어주세요"></div>
+                <div class="input-group"><label>그룹 입장 비밀번호 (선택)</label><input type="password" placeholder="비공개 그룹 설정 시 입력"></div>
+                <button type="button" class="btn btn-primary" onclick="handleCreateGroup()">그룹 개설하기</button>
+            </form>
+        </div>
+    </section>
+</div>
+
+<script src="script.js"></script>
+<script>
+    function handleCreateGroup() {
+        const name = document.getElementById('groupName').value;
+        if(!name) { alert("그룹 이름을 입력해주세요."); return; }
+        alert(`'${name}' 그룹이 성공적으로 개설되었습니다!`);
+        location.href = 'rank.html';
+    }
+</script>
+</body>
+</html>
