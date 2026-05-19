@@ -9,9 +9,6 @@ services:
     ports:
       - "8000:80"
 
-    depends_on:
-      - ai
-
   ai:
     build:
       context: ./ai
@@ -19,13 +16,5 @@ services:
 
     container_name: focus-ai
 
-    ports:
-      - "8001:8000"
-
-    devices:
-      - "/dev/video0:/dev/video0"
-
-    volumes:
-      - ./ai:/app
-
-    privileged: true
+    expose:
+      - "8000"

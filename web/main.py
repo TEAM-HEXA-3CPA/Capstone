@@ -18,7 +18,7 @@ current_status = "Starting"
 @app.get("/")
 def root():
     return {
-        "message": "AI server running"
+        "message": "server running"
     }
 
 
