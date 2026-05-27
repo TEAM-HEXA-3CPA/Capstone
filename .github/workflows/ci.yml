@@ -38,7 +38,8 @@ jobs:
         run: sleep 15
 
       - name: Check nginx response
-        run: curl -I http://localhost
+        run: curl -I http://localhost:8000
+
 
       - name: Check web page
         run: curl http://localhost
