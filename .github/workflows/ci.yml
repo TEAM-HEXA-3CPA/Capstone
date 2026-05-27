@@ -10,7 +10,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-      - name: Docker Compose Build
+      - name: Show files
+        run: ls -al
+
+      - name: Docker version
+        run: docker --version
+
+      - name: Docker Compose version
+        run: docker compose version
+
+      - name: Validate docker-compose
+        run: docker compose -f compose.yml config
+
+      - name: Build containers
         run: docker compose -f compose.yml build
+
+      - name: Start containers
+        run: docker compose -f compose.yml up -d
+
+      - name: Show running containers
+        run: docker ps -a
+
+      - name: Wait for containers
+        run: sleep 15
+
+      - name: Check nginx response
+        run: curl -I http://localhost
+
+      - name: Check web page
+        run: curl http://localhost
+
+      - name: Container logs
+        run: docker compose logs
+
+      - name: Stop containers
+        if: always()
+        run: docker compose down
