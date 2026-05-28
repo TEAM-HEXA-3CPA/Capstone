@@ -1,4 +1,5 @@
 /* style.css */
+
 :root {
     --primary: #009460;
     --primary-light: #e6f4ef;
@@ -32,7 +33,7 @@
 }
 
 html { scroll-behavior: smooth; }
-body { background: var(--bg); color: var(--text-main); transition: background 0.3s, color 0.3s; }
+body { background: var(--bg); color: var(--text-main); transition: background 0.3s, color 0.3s; isolation: isolate; }
 
 .container { max-width: 1100px; margin: 0 auto; width: 100%; padding: 0 20px; }
 section { padding: 120px 0 60px 0; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
@@ -109,3 +110,102 @@ input:focus { border-color: var(--primary); background: var(--white); }
 .rank-table td { padding: 20px; border-bottom: 1px solid var(--bg); font-weight: 500; }
 
 @media (max-width: 900px) { .auth-card, .camera-grid, .report-grid, .rank-grid { grid-template-columns: 1fr; } .auth-info { display: none; } }
+
+
+/* 비밀번호 모달 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.2s;
+    transform: translateZ(0); 
+}
+.modal-overlay.hidden {
+    display: none;
+}
+.modal-box {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 32px 28px;
+    width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+}
+.modal-box h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-main);
+    text-align: center;
+}
+.modal-box p {
+    font-size: 0.9rem;
+    color: var(--text-sub);
+    text-align: center;
+}
+.modal-box input {
+    width: 100%;
+    padding: 13px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+.modal-box input:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}
+.cancel-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-sub);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: 0.2s;
+}
+.cancel-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.join-btn {
+    flex: 2;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: 0.2s;
+}
+.join-btn:hover {
+    background: var(--primary-dark);
+}
+.modal-error {
+    font-size: 0.8rem;
+    color: #ef4444;
+    text-align: center;
+    display: none;
+}
