@@ -8,6 +8,8 @@ services:
 
     ports:
       - "80:80"
+    volumes:
+      - ./web:/usr/share/nginx/html
 
   ai:
     build:

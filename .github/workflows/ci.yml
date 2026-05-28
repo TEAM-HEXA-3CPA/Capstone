@@ -34,6 +34,10 @@ jobs:
       - name: Show running containers
         run: docker ps -a
 
+      - name: Container logs
+        if: always()
+        run: docker compose logs
+
       - name: Wait for containers
         run: sleep 15
 
@@ -43,9 +47,6 @@ jobs:
 
       - name: Check web page
         run: curl http://localhost
-
-      - name: Container logs
-        run: docker compose logs
 
       - name: Stop containers
         if: always()
