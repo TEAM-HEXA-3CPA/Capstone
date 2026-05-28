@@ -192,3 +192,4 @@ function updateDemoData(type, val) {
         }
     }
 }
+
