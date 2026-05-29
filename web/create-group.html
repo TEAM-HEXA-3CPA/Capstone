@@ -34,7 +34,7 @@
                 <div class="input-group"><label>그룹 한 줄 소개</label><input type="text" placeholder="그룹의 목표를 적어주세요"></div>
                 <div class="input-group"><label>그룹 입장 비밀번호 (선택)</label><input type="password" placeholder="비공개 그룹 설정 시 입력"></div>
                 <button type="button" class="btn btn-primary" onclick="handleCreateGroup()">그룹 개설하기</button>
-                <button type="button" class="btn" style="background:var(--bg); color:var(--primary); border:1px solid var(--primary); margin-top:10px;" onclick="openPasswordModal()">비밀번호로 그룹 입장하기</button>
+                <button type="button" class="btn" style="background:var(--bg); color:var(--primary); border:1px solid var(--primary); margin-top:10px;" onclick="openPasswordModal()">초대 코드로 그룹 입장하기</button>
                 
             </form>
         </div>
@@ -51,13 +51,30 @@
         location.href = 'rank.html';
     }
 </script>
-<!-- 비밀번호 입력 모달 -->
-<div id="passwordModal" class="modal-overlay hidden">
+<!-- STEP 1: 초대 코드 입력 모달 -->
+<div id="inviteModal" class="modal-overlay hidden">
     <div class="modal-box">
         <h2>그룹 입장</h2>
+        <p>초대 코드를 입력하세요.</p>
+        <input
+            type="text"
+            id="inviteCode"
+            placeholder="예: FOCUS-001"
+            style="text-transform: uppercase; letter-spacing: 1px;"
+        >
+        <p class="modal-error" id="inviteError"></p>
+        <div class="modal-buttons">
+            <button class="cancel-btn" onclick="closeModal()">취소</button>
+            <button class="join-btn" onclick="submitInviteCode()">확인</button>
+        </div>
+    </div>
+</div>
 
-        <p>비밀번호를 입력하세요.</p>
-
+<!-- STEP 2: 비밀번호 입력 모달 (비밀번호가 있는 그룹에만 표시) -->
+<div id="passwordModal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <h2>비밀번호 확인</h2>
+        <p><span id="pwModalGroupName"></span> 그룹은 비밀번호가 설정되어 있습니다.</p>
         <input
             type="password"
             id="groupPassword"
@@ -65,14 +82,8 @@
         >
         <p class="modal-error" id="modalError"></p>
         <div class="modal-buttons">
-            <button class="cancel-btn" onclick="closeModal()">
-                취소
-            </button>
-
-            <button class="join-btn" onclick="submitPassword()">
-                입장하기
-            </button>
-            
+            <button class="cancel-btn" onclick="closeModal()">취소</button>
+            <button class="join-btn" onclick="submitPassword()">입장하기</button>
         </div>
     </div>
 </div>
