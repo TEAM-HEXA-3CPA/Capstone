@@ -53,3 +53,7 @@ jobs:
       - name: Stop containers
         if: always()
         run: docker compose down
+
+
+      - name: Create .env
+        run: | echo "${{ secrets.ENV_FILE }}" > .env
