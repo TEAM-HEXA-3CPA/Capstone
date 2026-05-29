@@ -3,18 +3,19 @@ services:
     build:
       context: ./web
       dockerfile: Dockerfile.web
-
     container_name: web
-
     ports:
       - "80:80"
+    depends_on:
+      - backend
 
-  ai:
+  backend:
     build:
-      context: ./ai
-      dockerfile: Dockerfile.ai
-
-    container_name: focus-ai
-
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    container_name: focus-backend
     expose:
+      - "5000"
       - "8000"
+    env_file:
+      - .env

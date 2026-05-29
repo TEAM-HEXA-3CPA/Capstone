@@ -1,0 +1,10 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install flask pymysql cryptography --break-system-packages
+
+COPY signup.py .
+COPY *.html .
+
+CMD ["python", "signup.py"]

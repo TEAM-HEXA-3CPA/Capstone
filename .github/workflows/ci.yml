@@ -24,6 +24,9 @@ jobs:
       - name: Docker Compose version
         run: docker compose version
 
+      - name: Create .env
+        run: echo "${{ secrets.ENV_FILE }}" > .env
+
       - name: Validate docker-compose
         run: docker compose -f compose.yml config
 
@@ -53,3 +56,5 @@ jobs:
       - name: Stop containers
         if: always()
         run: docker compose down
+
+
