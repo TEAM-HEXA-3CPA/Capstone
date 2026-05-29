@@ -12,7 +12,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: backend/Dockerfile.backend
+      dockerfile: Dockerfile.backend
     container_name: focus-backend
     expose:
       - "5000"
