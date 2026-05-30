@@ -18,6 +18,10 @@ RUN pip install --no-cache-dir \
     numpy \
     mediapipe
 
+RUN mkdir -p /tmp/matplotlib
+ENV MPLCONFIGDIR=/tmp/matplotlib
+
+
 COPY . .
 
 CMD ["python", "start.py"]
