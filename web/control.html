@@ -11,12 +11,27 @@
 
 <header>
     <a href="main-home.html" class="logo" style="text-decoration: none;">FocusMate</a>
-    <nav>
+    <nav style="display: flex; align-items: center;">
         <a href="control.html" style="color: var(--primary); font-weight: 800;">집중분석</a>
-        <a href="report.html">리포트</a>
         <a href="rank.html">전체랭킹</a>
-        <a href="index.html">로그인</a>
-        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
+        <a href="create-group.html">그룹</a>
+        
+        <div class="user-menu-container">
+            <a href="#" id="userTrigger" onclick="toggleUserDropdown(event)" class="user-menu-trigger">👤 aa5467aa님 ▾</a>
+            <div class="user-dropdown-box" id="userDropdown">
+                <div class="user-info-summary">
+                    <div class="user-info-name">aa5467aa</div>
+                    <div class="user-info-email">focusmate_user@yju.ac.kr</div>
+                    <a href="report.html" class="dropdown-item" style="color: var(--primary); font-weight: bold; padding-left: 0;">📊 나의 몰입 리포트</a>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="#" onclick="handleLeaveGroup(event)" class="dropdown-item">🏃 소속 그룹 탈퇴</a>
+                <a href="#" onclick="handleDeleteAccount(event)" class="dropdown-item danger">❌ 서비스 회원 탈퇴</a>
+                <div class="dropdown-divider"></div>
+                <a href="index.html" class="dropdown-item" style="color: var(--text-sub);">로그아웃</a>
+            </div>
+        </div>
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="margin-left: 25px;">🌙</button>
     </nav>
 </header>
 
@@ -34,9 +49,8 @@
             <div class="control-panel">
                 <button class="btn btn-primary" style="background:#1e293b" onclick="startAI()">분석 실행 시작</button>
                 <button class="btn" style="background:#ef4444; color:white;" onclick="stopAI()">완전히 종료</button>
-                <div class="sys-msg-box">
-                    <h4 style="color: var(--primary); margin-bottom: 8px;">시스템 메시지</h4>
-                    <p id="msg-text" style="font-size: 0.9rem; line-height: 1.5;">사용자 인증 완료. 카메라 정면을 응시하고 챌린지를 활성화해 주세요.</p>
+                <div class="log-box" id="systemLog">
+                    <span style="color: var(--primary); font-weight: 700;">[SYSTEM LOG]</span> 시스템이 준비되었습니다.
                 </div>
             </div>
         </div>
@@ -44,5 +58,19 @@
 </div>
 
 <script src="script.js"></script>
+<script>
+    function startAI() {
+        const feed = document.getElementById('camFeed');
+        const log = document.getElementById('systemLog');
+        feed.innerHTML = `<img src="/api/stream" style="width:100%; height:100%; object-fit:cover; border-radius:12px;" onerror="this.parentElement.innerHTML='<p>카메라 스트림을 불러올 수 없습니다</p>'">`;
+        log.innerHTML = `<span style="color: #3b82f6; font-weight:700;">[SYSTEM LOG]</span> 실시간 AI 분석 스트리밍 시작...`;
+    }
+    function stopAI() {
+        const feed = document.getElementById('camFeed');
+        const log = document.getElementById('systemLog');
+        feed.innerHTML = `<p>대기 모드</p><span style="font-size: 0.8rem; opacity:0.5;">분석 시작 버튼을 눌러주세요</span>`;
+        log.innerHTML = `<span style="color: #ef4444; font-weight:700;">[SYSTEM LOG]</span> 분석 프로세스가 종료되었습니다.`;
+    }
+</script>
 </body>
 </html>

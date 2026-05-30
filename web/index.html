@@ -6,79 +6,152 @@
     <title>FocusMate | 로그인</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <style>
+        /* ── 에러 메시지 인라인 표시 ── */
+        .field-error {
+            color: #ef4444;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-top: 4px;
+            display: none;
+        }
+        .input-group input.invalid {
+            border-color: #ef4444;
+        }
+        .input-group input.valid {
+            border-color: var(--primary);
+        }
+        /* ── 비밀번호 강도 바 ── */
+        .pw-strength-bar {
+            height: 4px;
+            border-radius: 99px;
+            background: var(--border);
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .pw-strength-fill {
+            height: 100%;
+            border-radius: 99px;
+            width: 0%;
+            transition: width 0.3s ease, background 0.3s ease;
+        }
+        .pw-hint {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            margin-top: 4px;
+        }
+        /* 전환 애니메이션 */
+        .auth-card { animation: fadeIn 0.25s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
 
 <header>
     <a href="main-home.html" class="logo" style="text-decoration: none;">FocusMate</a>
-    <nav>
+    <nav style="display: flex; align-items: center;">
         <a href="control.html">집중분석</a>
-        <a href="report.html">리포트</a>
         <a href="rank.html">전체랭킹</a>
-        <a href="index.html" style="color: var(--primary); font-weight: 800;">로그인</a>
-        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
+        <a href="index.html" style="color: var(--primary); font-weight: 800; margin-left: 25px;">로그인</a>
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="margin-left: 25px;">🌙</button>
     </nav>
 </header>
 
 <div class="container">
     <section id="login">
 
-        <!-- 로그인 폼 -->
+        <!-- ══ 로그인 카드 ══════════════════════════════════════════ -->
         <div class="auth-card card" id="loginSection">
             <div class="auth-info">
                 <h2>다시 몰입할<br>시간입니다.</h2>
                 <p style="color:var(--text-sub)">아이디와 비밀번호를 입력하고 학습을 이어가세요.</p>
             </div>
-            <form action="/login" method="POST" id="loginForm">
+
+            <div>
                 <div class="input-group">
-                    <label>아이디</label>
-                    <input type="text" name="user_id" placeholder="ID" required>
+                    <label for="login_id">아이디</label>
+                    <input type="text" id="login_id" placeholder="ID" autocomplete="username" required>
+                    <span class="field-error" id="login_id_err"></span>
                 </div>
                 <div class="input-group">
-                    <label>비밀번호</label>
-                    <input type="password" name="password" placeholder="비밀번호" required>
+                    <label for="login_pw">비밀번호</label>
+                    <input type="password" id="login_pw" placeholder="비밀번호" autocomplete="current-password" required>
+                    <span class="field-error" id="login_pw_err"></span>
                 </div>
-                <button type="submit" class="btn btn-primary">로그인</button>
-                <p style="text-align: center; margin-top: 16px; font-size: 0.88rem; color: var(--text-sub);">
-                    계정이 없으신가요?
-                    <a href="javascript:void(0)" onclick="showSignup()" style="color: var(--primary); font-weight: 700; text-decoration: none;">회원가입</a>
+                <span class="field-error" id="login_global_err" style="display:block; margin-bottom:10px;"></span>
+                <button class="btn btn-primary" id="loginBtn" onclick="handleLogin()" style="width:100%;">로그인</button>
+                <p style="text-align:center; margin-top:16px; font-size:0.88rem; color:var(--text-sub);">
+                    처음이신가요?
+                    <a href="javascript:void(0)" onclick="showSignup()" style="color:var(--primary); font-weight:700;">회원가입</a>
                 </p>
-            </form>
+            </div>
         </div>
 
-        <!-- 회원가입 폼 (기본 숨김) -->
-        <div class="auth-card card" id="signupSection" style="display: none;">
+        <!-- ══ 회원가입 카드 ════════════════════════════════════════ -->
+        <div class="auth-card card" id="signupSection" style="display:none;">
             <div class="auth-info">
-                <h2>더 높은 몰입을<br>경험하세요.</h2>
-                <p style="color:var(--text-sub)">정밀 측정과 랭킹 시스템이 당신의 학습 효율을 극대화합니다.</p>
+                <h2>FocusMate와<br>함께 시작하세요.</h2>
+                <p style="color:var(--text-sub)">계정을 생성하고 실시간 AI 몰입 분석을 경험해 보세요.</p>
             </div>
-            <form action="/signup" method="POST" id="signupForm">
+
+            <div>
+                <!-- 이름 -->
                 <div class="input-group">
-                    <label>이름</label>
-                    <input type="text" name="name" maxlength="10" placeholder="실명을 입력하세요" required>
+                    <label for="su_name">이름 <span style="color:var(--text-sub); font-weight:400;">(최대 10자)</span></label>
+                    <input type="text" id="su_name" maxlength="10" placeholder="홍길동" required>
+                    <span class="field-error" id="su_name_err"></span>
                 </div>
+                <!-- 전화번호 -->
                 <div class="input-group">
-                    <label>전화번호</label>
-                    <input type="tel" name="phone" placeholder="01012345678" required>
+                    <label for="su_phone">전화번호 <span style="color:var(--text-sub); font-weight:400;">(-없이 숫자만)</span></label>
+                    <input type="tel" id="su_phone" placeholder="01000000000" maxlength="11" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
+                    <span class="field-error" id="su_phone_err"></span>
                 </div>
+                <!-- 이메일 -->
                 <div class="input-group">
-                    <label>닉네임</label>
-                    <input type="text" name="nickname" maxlength="10" placeholder="랭킹에 표시될 이름" required>
+                    <label for="su_email">이메일</label>
+                    <input type="email" id="su_email" placeholder="example@email.com" required>
+                    <span class="field-error" id="su_email_err"></span>
                 </div>
+                <!-- 닉네임 -->
                 <div class="input-group">
-                    <label>아이디</label>
-                    <input type="text" name="user_id" maxlength="20" placeholder="ID" required>
+                    <label for="su_nickname">닉네임 <span style="color:var(--text-sub); font-weight:400;">(최대 10자, 랭킹 표시)</span></label>
+                    <input type="text" id="su_nickname" maxlength="10" placeholder="나만의 이름" required>
+                    <span class="field-error" id="su_nickname_err"></span>
                 </div>
+                <!-- 아이디 -->
                 <div class="input-group">
-                    <label>비밀번호</label>
-                    <input type="password" name="password" placeholder="비밀번호" required>
+                    <label for="su_id">아이디 <span style="color:var(--text-sub); font-weight:400;">(최대 20자)</span></label>
+                    <input type="text" id="su_id" maxlength="20" placeholder="ID" autocomplete="username" required>
+                    <span class="field-error" id="su_id_err"></span>
                 </div>
-                <button type="submit" class="btn btn-primary">회원가입</button>
-                <p style="text-align: center; margin-top: 16px; font-size: 0.88rem; color: var(--text-sub);">
+                <!-- 비밀번호 -->
+                <div class="input-group">
+                    <label for="su_pw">비밀번호</label>
+                    <input type="password" id="su_pw" placeholder="대·소문자·숫자·특수문자 포함 8자 이상"
+                           autocomplete="new-password" oninput="checkPwStrength(this.value)" required>
+                    <div class="pw-strength-bar"><div class="pw-strength-fill" id="pwStrengthFill"></div></div>
+                    <span class="pw-hint" id="pwStrengthHint"></span>
+                    <span class="field-error" id="su_pw_err"></span>
+                </div>
+                <!-- 비밀번호 확인 -->
+                <div class="input-group">
+                    <label for="su_pw2">비밀번호 확인</label>
+                    <input type="password" id="su_pw2" placeholder="비밀번호 재입력"
+                           autocomplete="new-password" required>
+                    <span class="field-error" id="su_pw2_err"></span>
+                </div>
+
+                <span class="field-error" id="signup_global_err" style="display:block; margin-bottom:10px;"></span>
+                <button class="btn btn-primary" id="signupBtn" onclick="handleSignup()" style="width:100%;">회원가입</button>
+                <p style="text-align:center; margin-top:16px; font-size:0.88rem; color:var(--text-sub);">
                     이미 계정이 있으신가요?
-                    <a href="javascript:void(0)" onclick="showLogin()" style="color: var(--primary); font-weight: 700; text-decoration: none;">로그인</a>
+                    <a href="javascript:void(0)" onclick="showLogin()" style="color:var(--primary); font-weight:700;">로그인</a>
                 </p>
-            </form>
+            </div>
         </div>
 
     </section>
@@ -86,14 +159,172 @@
 
 <script src="script.js"></script>
 <script>
-    function showSignup() {
-        document.getElementById('loginSection').style.display = 'none';
-        document.getElementById('signupSection').style.display = '';
+// ── 화면 전환 ──────────────────────────────────────────────────────────
+function showSignup() {
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('signupSection').style.display = '';
+}
+function showLogin() {
+    document.getElementById('signupSection').style.display = 'none';
+    document.getElementById('loginSection').style.display = '';
+}
+
+// ── 에러 표시 헬퍼 ────────────────────────────────────────────────────
+function showErr(id, msg) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+}
+function clearErr(id) { showErr(id, ''); }
+
+// ── 비밀번호 강도 체크 ────────────────────────────────────────────────
+function checkPwStrength(pw) {
+    const fill = document.getElementById('pwStrengthFill');
+    const hint = document.getElementById('pwStrengthHint');
+    let score = 0;
+    if (pw.length >= 8)              score++;
+    if (/[A-Z]/.test(pw))           score++;
+    if (/[a-z]/.test(pw))           score++;
+    if (/\d/.test(pw))              score++;
+    if (/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(pw)) score++;
+
+    const levels = [
+        { w:'0%',   bg:'',          txt:'' },
+        { w:'20%',  bg:'#ef4444',   txt:'매우 약함' },
+        { w:'40%',  bg:'#f97316',   txt:'약함' },
+        { w:'60%',  bg:'#eab308',   txt:'보통' },
+        { w:'80%',  bg:'#3b82f6',   txt:'강함' },
+        { w:'100%', bg:'#009460',   txt:'매우 강함 ✓' },
+    ];
+    const lv = levels[score];
+    fill.style.width      = lv.w;
+    fill.style.background = lv.bg;
+    hint.textContent      = lv.txt;
+    hint.style.color      = lv.bg || 'var(--text-sub)';
+}
+
+// ── 비밀번호 정책 정규식 ──────────────────────────────────────────────
+const PW_REGEX = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]).{8,}$/;
+
+// ── 로그인 처리 ───────────────────────────────────────────────────────
+async function handleLogin() {
+    const user_id  = document.getElementById('login_id').value.trim();
+    const password = document.getElementById('login_pw').value;
+
+    clearErr('login_id_err');
+    clearErr('login_pw_err');
+    clearErr('login_global_err');
+
+    let valid = true;
+    if (!user_id)   { showErr('login_id_err', '아이디를 입력해주세요.'); valid = false; }
+    if (!password)  { showErr('login_pw_err', '비밀번호를 입력해주세요.'); valid = false; }
+    if (!valid) return;
+
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.textContent = '로그인 중...';
+
+    try {
+        const form = new FormData();
+        form.append('user_id',  user_id);
+        form.append('password', password);
+
+        const res  = await fetch('/login', { method: 'POST', body: form });
+        const data = await res.json();
+
+        if (data.ok) {
+            // 닉네임 세션 저장 후 홈으로
+            sessionStorage.setItem('nickname', data.nickname);
+            sessionStorage.setItem('user_id',  data.user_id);
+            location.href = 'main-home.html';
+        } else {
+            showErr('login_global_err', data.message || '아이디 또는 비밀번호가 올바르지 않습니다.');
+        }
+    } catch (e) {
+        showErr('login_global_err', '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '로그인';
     }
-    function showLogin() {
-        document.getElementById('signupSection').style.display = 'none';
-        document.getElementById('loginSection').style.display = '';
+}
+
+// ── 회원가입 처리 ─────────────────────────────────────────────────────
+async function handleSignup() {
+    const name     = document.getElementById('su_name').value.trim();
+    const phone    = document.getElementById('su_phone').value.trim();
+    const email    = document.getElementById('su_email').value.trim();
+    const nickname = document.getElementById('su_nickname').value.trim();
+    const user_id  = document.getElementById('su_id').value.trim();
+    const password = document.getElementById('su_pw').value;
+    const password2= document.getElementById('su_pw2').value;
+
+    // 에러 초기화
+    ['su_name','su_phone','su_email','su_nickname','su_id','su_pw','su_pw2','signup_global'].forEach(id => clearErr(id + '_err'));
+    clearErr('signup_global_err');
+
+    let valid = true;
+
+    if (!name || name.length > 10)
+        { showErr('su_name_err', '이름은 1~10자여야 합니다.'); valid = false; }
+    if (!phone || !/^[0-9]{10,11}$/.test(phone))
+        { showErr('su_phone_err', '숫자만 10~11자리로 입력해주세요. (예: 01000000000)'); valid = false; }
+    if (!email || !email.includes('@'))
+        { showErr('su_email_err', '올바른 이메일 주소를 입력해주세요.'); valid = false; }
+    if (!nickname || nickname.length > 10)
+        { showErr('su_nickname_err', '닉네임은 1~10자여야 합니다.'); valid = false; }
+    if (!user_id || user_id.length > 20)
+        { showErr('su_id_err', '아이디는 1~20자여야 합니다.'); valid = false; }
+    if (!PW_REGEX.test(password))
+        { showErr('su_pw_err', '대·소문자·숫자·특수문자를 각 1개 이상 포함한 8자 이상이어야 합니다.'); valid = false; }
+    if (password !== password2)
+        { showErr('su_pw2_err', '비밀번호가 일치하지 않습니다.'); valid = false; }
+
+    if (!valid) return;
+
+    const btn = document.getElementById('signupBtn');
+    btn.disabled = true;
+    btn.textContent = '처리 중...';
+
+    try {
+        const form = new FormData();
+        form.append('name',     name);
+        form.append('phone',    phone);
+        form.append('email',    email);
+        form.append('nickname', nickname);
+        form.append('user_id',  user_id);
+        form.append('password', password);
+
+        const res = await fetch('/signup', { method: 'POST', body: form });
+
+        // 서버가 redirect 하면 성공
+        if (res.redirected || res.ok) {
+            sessionStorage.setItem('nickname', nickname);
+            sessionStorage.setItem('user_id',  user_id);
+            location.href = 'main-home.html';
+        } else {
+            const text = await res.text();
+            // 서버가 alert 스크립트를 보낸 경우 메시지 파싱
+            const match = text.match(/alert\('(.+?)'\)/);
+            showErr('signup_global_err', match ? match[1] : '회원가입 중 오류가 발생했습니다.');
+        }
+    } catch (e) {
+        showErr('signup_global_err', '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '회원가입';
     }
+}
+
+// ── Enter 키 지원 ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('login_pw')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') handleLogin();
+    });
+    document.getElementById('su_pw2')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') handleSignup();
+    });
+});
 </script>
 </body>
 </html>

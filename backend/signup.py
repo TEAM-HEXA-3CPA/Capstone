@@ -1,100 +1,199 @@
 import os
+import re
 import pymysql
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, redirect, jsonify, session
+from group_api import groups_bp
 
-# 현재 폴더 설정 유지
-app = Flask(__name__, template_folder='.', static_folder='.', static_url_path='')
+app = Flask(__name__)
+app.register_blueprint(groups_bp)
 
-# 💡 보내주셨던 AWS Aurora DB 설정 값 그대로 대입
-DB_HOST = "hexa-databases.cluster-clw0oikmwous.ap-northeast-2.rds.amazonaws.com"
-DB_USER = "admin"
-DB_PASSWORD = "A123456!"
-DB_NAME = "hexa"
-DB_PORT = 3306
+# 세션 암호화 키 (환경변수로 관리)
+app.secret_key = os.environ.get("SECRET_KEY", "focusmate-secret-key-change-in-prod")
 
-def get_db_connection():
+# ── DB 연결 설정 ────────────────────────────────────────────────────────
+DB_HOST     = os.environ.get("DB_HOST",     "localhost")
+DB_USER     = os.environ.get("DB_USER",     "admin")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
+DB_NAME     = os.environ.get("DB_NAME",     "hexa")
+DB_PORT     = int(os.environ.get("DB_PORT", 3306))
+
+
+def get_db():
     return pymysql.connect(
         host=DB_HOST,
         user=DB_USER,
         password=DB_PASSWORD,
         database=DB_NAME,
         port=DB_PORT,
-        charset='utf8mb4',
+        charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor
     )
 
-# 1. 메인 로그인/회원가입 화면 띄우기
-@app.route('/')
-@app.route('/index.html')
-def login_page():
-    return render_template('index.html')
 
-# 2. 회원가입
-@app.route('/signup', methods=['POST'])
+# ── 비밀번호 유효성 검사 (백엔드 이중 검증) ────────────────────────────
+#    대문자 1개 이상, 소문자 1개 이상, 숫자 1개 이상, 특수문자 1개 이상, 8자 이상
+PW_PATTERN = re.compile(
+    r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]).{8,}$'
+)
+
+
+# ── 회원가입 ──────────────────────────────────────────────────────────
+@app.route("/signup", methods=["POST"])
 def signup():
-    name = request.form.get('name')
-    phone = request.form.get('phone')
-    nickname = request.form.get('nickname')
-    user_id = request.form.get('user_id')
-    password = request.form.get('password')
+    name     = (request.form.get("name")     or "").strip()
+    phone    = (request.form.get("phone")    or "").strip()
+    email    = (request.form.get("email")    or "").strip()
+    nickname = (request.form.get("nickname") or "").strip()
+    user_id  = (request.form.get("user_id")  or "").strip()
+    password = (request.form.get("password") or "")
 
-    dummy_email = f"{user_id}@test.com"
+    # ── 서버 측 입력 검증 ────────────────────────────────────────────
+    errors = []
 
-    connection = get_db_connection()
+    if not name or len(name) > 10:
+        errors.append("이름은 1~10자여야 합니다.")
+    if not phone:
+        errors.append("전화번호를 입력해주세요.")
+    if not email or "@" not in email:
+        errors.append("올바른 이메일을 입력해주세요.")
+    if not nickname or len(nickname) > 10:
+        errors.append("닉네임은 1~10자여야 합니다.")
+    if not user_id or len(user_id) > 20:
+        errors.append("아이디는 1~20자여야 합니다.")
+    if not PW_PATTERN.match(password):
+        errors.append("비밀번호는 8자 이상, 대·소문자·숫자·특수문자를 각 1개 이상 포함해야 합니다.")
+
+    if errors:
+        return jsonify({"ok": False, "message": " / ".join(errors)}), 400
+
+    # ── bcrypt 해싱 ──────────────────────────────────────────────────
     try:
-        with connection.cursor() as cursor:
-            sql = """
-                INSERT INTO users (user_id, password, name, phone, nickname, email)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """
-            cursor.execute(sql, (user_id, password, name, phone, nickname, dummy_email))
+        import bcrypt
+        hashed_pw = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    except ImportError:
+        # bcrypt 없을 시 hashlib 대체 (프로덕션에서는 반드시 bcrypt 사용)
+        import hashlib
+        hashed_pw = hashlib.sha256(password.encode()).hexdigest()
 
-        connection.commit()
-        print(f"🎉 {user_id} 회원가입 완료 (더미 이메일: {dummy_email})")
-
-        return """
-            <script>
-                alert('회원가입이 완료되었습니다! 로그인해 주세요.');
-                location.href = '/';
-            </script>
-        """
-    except pymysql.err.IntegrityError:
-        print("⚠️ 중복된 아이디 입력으로 인해 가입이 거부되었습니다.")
-        return "<script>alert('이미 존재하는 아이디입니다!'); history.back();</script>"
-    except Exception as e:
-        print(f"❌ DB 저장 중 에러 발생: {str(e)}")
-        return f"서버 에러 발생: {str(e)}", 500
-    finally:
-        connection.close()
-
-# 3. 로그인 (신규 추가)
-@app.route('/login', methods=['POST'])
-def login():
-    user_id = request.form.get('user_id')
-    password = request.form.get('password')
-
-    connection = get_db_connection()
+    conn = get_db()
     try:
-        with connection.cursor() as cursor:
-            sql = "SELECT * FROM users WHERE user_id = %s AND password = %s"
-            cursor.execute(sql, (user_id, password))
-            user = cursor.fetchone()
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO users
+                    (user_id, password, name, phone, nickname, email)
+                VALUES
+                    (%s, %s, %s, %s, %s, %s)
+                """,
+                (user_id, hashed_pw, name, phone, nickname, email)
+            )
+        conn.commit()
 
-        if user:
-            return redirect(url_for('control_page'))
+        # 가입 성공 → 세션 저장
+        session["user_id"]  = user_id
+        session["nickname"] = nickname
+        return jsonify({
+            "ok":       True,
+            "nickname": nickname,
+            "user_id":  user_id
+        })
+
+    except pymysql.err.IntegrityError as e:
+        err_msg = str(e)
+        if "nickname" in err_msg:
+            return jsonify({"ok": False, "message": "이미 사용 중인 닉네임입니다."}), 409
+        elif "user_id" in err_msg:
+            return jsonify({"ok": False, "message": "이미 사용 중인 아이디입니다."}), 409
+        elif "phone" in err_msg:
+            return jsonify({"ok": False, "message": "이미 등록된 전화번호입니다."}), 409
         else:
-            return "<script>alert('아이디 또는 비밀번호가 올바르지 않습니다.'); history.back();</script>"
+            return jsonify({"ok": False, "message": "이미 사용 중인 정보가 있습니다."}), 409
+
     except Exception as e:
-        print(f"❌ 로그인 중 에러 발생: {str(e)}")
-        return f"서버 에러 발생: {str(e)}", 500
+        return jsonify({"ok": False, "message": f"서버 에러: {str(e)}"}), 500
+
     finally:
-        connection.close()
+        conn.close()
 
-# 4. 집중분석 페이지
-@app.route('/control')
-@app.route('/control.html')
-def control_page():
-    return render_template('control.html')
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+# ── 로그인 ────────────────────────────────────────────────────────────
+@app.route("/login", methods=["POST"])
+def login():
+    user_id  = (request.form.get("user_id")  or "").strip()
+    password = (request.form.get("password") or "")
+
+    if not user_id or not password:
+        return _alert("아이디와 비밀번호를 입력해주세요.")
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT user_id, password, nickname FROM users WHERE user_id = %s",
+                (user_id,)
+            )
+            user = cur.fetchone()
+
+        if not user:
+            return _alert("아이디 또는 비밀번호가 올바르지 않습니다.")
+
+        # ── 비밀번호 검증 ────────────────────────────────────────────
+        pw_matched = False
+        try:
+            import bcrypt
+            pw_matched = bcrypt.checkpw(
+                password.encode("utf-8"),
+                user["password"].encode("utf-8")
+            )
+        except ImportError:
+            import hashlib
+            pw_matched = (hashlib.sha256(password.encode()).hexdigest() == user["password"])
+
+        if not pw_matched:
+            return _alert("아이디 또는 비밀번호가 올바르지 않습니다.")
+
+        # ── 로그인 성공 → 세션 저장 후 JSON 반환 ────────────────────
+        session["user_id"]  = user["user_id"]
+        session["nickname"] = user["nickname"]
+
+        # 프론트가 fetch()로 호출하므로 JSON 반환
+        return jsonify({
+            "ok":       True,
+            "nickname": user["nickname"],
+            "user_id":  user["user_id"]
+        })
+
+    except Exception as e:
+        return f"서버 에러: {str(e)}", 500
+
+    finally:
+        conn.close()
+
+
+# ── 로그아웃 ──────────────────────────────────────────────────────────
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"ok": True})
+
+
+# ── 현재 로그인 유저 정보 조회 ────────────────────────────────────────
+@app.route("/me")
+def me():
+    if "user_id" not in session:
+        return jsonify({"ok": False}), 401
+    return jsonify({
+        "ok":       True,
+        "user_id":  session["user_id"],
+        "nickname": session["nickname"]
+    })
+
+
+# ── 내부 헬퍼: alert + history.back() ────────────────────────────────
+def _alert(msg: str):
+    safe = msg.replace("'", "\\'").replace("\n", "\\n")
+    return f"<script>alert('{safe}'); history.back();</script>"
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=False)

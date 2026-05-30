@@ -242,40 +242,23 @@ document.addEventListener('click', function(e) {
 });
 
 // =================================================================
-// 💡 추가: 닉네임 → 드롭다운 실시간 반영
-//    우선순위: /me API → sessionStorage 순으로 시도
+// 💡 추가: sessionStorage 닉네임 → 드롭다운 실시간 반영
 //    (main-home, control, rank, report 공통 적용)
 // =================================================================
-function applyNickname(nickname) {
-    const trigger = document.getElementById('userTrigger');
-    if (trigger) trigger.textContent = `👤 ${nickname}님 ▾`;
+document.addEventListener('DOMContentLoaded', () => {
+    const nickname = sessionStorage.getItem('nickname');
+    if (!nickname) return;
 
+    // 트리거 버튼 텍스트 교체
+    const trigger = document.getElementById('userTrigger');
+    if (trigger) {
+        trigger.textContent = `👤 ${nickname}님 ▾`;
+    }
+
+    // 드롭다운 내 이름/이메일 영역 교체
     const nameEl = document.querySelector('.user-info-name');
     if (nameEl) nameEl.textContent = nickname;
 
     const emailEl = document.querySelector('.user-info-email');
-    if (emailEl) emailEl.textContent = `${nickname}`;
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-    // index.html(로그인 페이지)에서는 드롭다운 없으므로 스킵
-    if (!document.getElementById('userTrigger')) return;
-
-    try {
-        // 1순위: 서버 세션에서 닉네임 가져오기
-        const res = await fetch('/me');
-        if (res.ok) {
-            const data = await res.json();
-            if (data.ok && data.nickname) {
-                sessionStorage.setItem('nickname', data.nickname);
-                sessionStorage.setItem('user_id',  data.user_id);
-                applyNickname(data.nickname);
-                return;
-            }
-        }
-    } catch (_) { /* 서버 없을 때 fallback */ }
-
-    // 2순위: sessionStorage (라이브 서버 / 오프라인 테스트용)
-    const saved = sessionStorage.getItem('nickname');
-    if (saved) applyNickname(saved);
+    if (emailEl) emailEl.textContent = `${nickname}@focusmate`;
 });

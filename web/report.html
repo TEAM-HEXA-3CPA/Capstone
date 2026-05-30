@@ -12,12 +12,27 @@
 
 <header>
     <a href="main-home.html" class="logo" style="text-decoration: none;">FocusMate</a>
-    <nav>
+    <nav style="display: flex; align-items: center;">
         <a href="control.html">집중분석</a>
-        <a href="report.html" style="color: var(--primary); font-weight: 800;">리포트</a>
         <a href="rank.html">전체랭킹</a>
-        <a href="index.html">로그인</a>
-        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
+        <a href="create-group.html">그룹</a>
+        
+        <div class="user-menu-container">
+            <a href="#" id="userTrigger" onclick="toggleUserDropdown(event)" class="user-menu-trigger">👤 aa5467aa님 ▾</a>
+            <div class="user-dropdown-box" id="userDropdown">
+                <div class="user-info-summary">
+                    <div class="user-info-name">aa5467aa</div>
+                    <div class="user-info-email">focusmate_user@yju.ac.kr</div>
+                    <a href="report.html" class="dropdown-item" style="color: var(--primary); font-weight: bold; padding-left: 0;">📊 나의 몰입 리포트</a>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="#" onclick="handleLeaveGroup(event)" class="dropdown-item">🏃 소속 그룹 탈퇴</a>
+                <a href="#" onclick="handleDeleteAccount(event)" class="dropdown-item danger">❌ 서비스 회원 탈퇴</a>
+                <div class="dropdown-divider"></div>
+                <a href="index.html" class="dropdown-item" style="color: var(--text-sub);">로그아웃</a>
+            </div>
+        </div>
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="margin-left: 25px;">🌙</button>
     </nav>
 </header>
 
@@ -26,37 +41,30 @@
         <div class="report-header">
             <div>
                 <h2>종합 몰입 분석 보고서</h2>
-                <p style="color:var(--text-sub)">AI가 정밀 측정한 5가지 핵심 수치 지표입니다.</p>
+                <p style="color: var(--text-sub); margin-top: 5px;">인공지능 모델이 정밀하게 정형화한 세부 집중 분석 데이터입니다.</p>
             </div>
-            <div style="text-align: right;">
-                <span style="font-size: 0.8rem; color:var(--text-sub)">데이터 세션 기준</span>
-                <p style="font-weight: 700; color: var(--primary);">오늘 누적 세션 분석</p>
+            <div class="date-badge">2024년 11월 17일 기준</div>
+        </div>
+
+        <div class="report-grid">
+            <div class="card">
+                <h3>📈 최근 5일간 몰입도 추이</h3>
+                <div class="chart-container">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📊 오늘 하루 집중도 분포 비중</h3>
+                <div class="chart-container">
+                    <canvas id="doughnutChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <div class="report-grid" style="margin-bottom: 30px;">
-            <div class="card">
-                <span class="chart-label">🕒 1. 실시간 몰입도 추이 (최근 1시간)</span>
-                <div style="position: relative; height:220px;"><canvas id="lineChart"></canvas></div>
-            </div>
-            <div class="card">
-                <span class="chart-label">📊 2. 요일별 순수 집중 시간 (단위: 분)</span>
-                <div style="position: relative; height:220px;"><canvas id="barChart"></canvas></div>
-            </div>
-            <div class="card">
-                <span class="chart-label">🕸️ 3. 몰입 다차원 요소 분석</span>
-                <div style="position: relative; height:220px; display: flex; justify-content: center;"><canvas id="radarChart"></canvas></div>
-            </div>
-            <div class="card">
-                <span class="chart-label">🍩 4. 세션 타임라인 점유율</span>
-                <div style="position: relative; height:220px; display: flex; justify-content: center;"><canvas id="doughnutChart"></canvas></div>
-            </div>
-        </div>
-
-        <div class="card" style="margin-bottom: 40px; padding: 30px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 700;">
-                <span>🎯 5. 오늘 목표 학습량 달성률</span>
-                <span id="progress-percent" style="color: var(--primary);">75%</span>
+        <div class="card" style="margin-top: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0;">🎯 일일 집중 목표 달성률</h3>
+                <span style="font-size: 1.2rem; font-weight: 800; color: var(--primary);">75%</span>
             </div>
             <div style="background: var(--border); width: 100%; height: 16px; border-radius: 8px; overflow: hidden;">
                 <div id="progress-bar" style="background: var(--primary); width: 75%; height: 100%; transition: width 0.5s ease-in-out;"></div>
@@ -64,7 +72,7 @@
             <p style="font-size: 0.85rem; color: var(--text-sub); margin-top: 10px;">일일 목표 4시간 중 3시간을 완수했습니다.</p>
         </div>
 
-        <div class="card" style="border: 1px dashed var(--primary); background: var(--primary-light);">
+        <div class="card" style="border: 1px dashed var(--primary); background: var(--primary-light); margin-top: 30px;">
             <h4 style="color: var(--primary); margin-bottom: 15px;">⚙️ 시각화 실시간 수치 조정 패널 (데모 검증용)</h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                 <div>
@@ -74,10 +82,6 @@
                 <div>
                     <label style="font-size:0.8rem; font-weight:700;">오늘 집중 비중 (%)</label>
                     <input type="range" min="0" max="100" value="80" oninput="updateDemoData('ratio', this.value)">
-                </div>
-                <div>
-                    <label style="font-size:0.8rem; font-weight:700;">목표 달성률 (%)</label>
-                    <input type="range" min="0" max="100" value="75" oninput="updateDemoData('progress', this.value)">
                 </div>
             </div>
         </div>

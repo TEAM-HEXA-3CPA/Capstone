@@ -11,12 +11,27 @@
 
 <header>
     <a href="main-home.html" class="logo" style="text-decoration: none;">FocusMate</a>
-    <nav>
+    <nav style="display: flex; align-items: center;">
         <a href="control.html">집중분석</a>
-        <a href="report.html">리포트</a>
         <a href="rank.html" style="color: var(--primary); font-weight: 800;">전체랭킹</a>
-        <a href="index.html">로그인</a>
-        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
+        <a href="create-group.html">그룹</a>
+        
+        <div class="user-menu-container">
+            <a href="#" id="userTrigger" onclick="toggleUserDropdown(event)" class="user-menu-trigger">👤 aa5467aa님 ▾</a>
+            <div class="user-dropdown-box" id="userDropdown">
+                <div class="user-info-summary">
+                    <div class="user-info-name">aa5467aa</div>
+                    <div class="user-info-email">focusmate_user@yju.ac.kr</div>
+                    <a href="report.html" class="dropdown-item" style="color: var(--primary); font-weight: bold; padding-left: 0;">📊 나의 몰입 리포트</a>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="#" onclick="handleLeaveGroup(event)" class="dropdown-item">🏃 소속 그룹 탈퇴</a>
+                <a href="#" onclick="handleDeleteAccount(event)" class="dropdown-item danger">❌ 서비스 회원 탈퇴</a>
+                <div class="dropdown-divider"></div>
+                <a href="index.html" class="dropdown-item" style="color: var(--text-sub);">로그아웃</a>
+            </div>
+        </div>
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="margin-left: 25px;">🌙</button>
     </nav>
 </header>
 
@@ -28,31 +43,28 @@
                 <h3 style="font-size: 1.8rem;">전체 14위 / 그룹 내 2위</h3>
             </div>
             <div style="text-align: right;">
-                <span style="opacity: 0.8; font-size: 0.9rem;">누적 학습 점수</span>
-                <h3 style="font-size: 1.8rem;">15,420 pts</h3>
+                <span style="opacity: 0.8; font-size: 0.9rem;">오늘 획득 점수</span>
+                <h3 style="font-size: 1.8rem; color: #f59e0b;">7,210 pts</h3>
             </div>
         </div>
 
         <div class="rank-grid">
             <div class="card">
-                <h3>🏆 전체 실시간 랭킹 TOP 5</h3>
+                <h3>🌍 전체 실시간 TOP 5</h3>
                 <table class="rank-table">
-                    <thead><tr><th>순위</th><th>닉네임</th><th>몰입 점수</th><th>총 시간</th></tr></thead>
+                    <thead><tr><th>순위</th><th>닉네임</th><th>몰입 점수</th></tr></thead>
                     <tbody>
-                        <tr><td style="color:gold; font-weight:900;">1</td><td>열공하는곰</td><td>45,200</td><td>142h</td></tr>
-                        <tr><td style="color:silver; font-weight:900;">2</td><td>몰입요정</td><td>42,100</td><td>120h</td></tr>
-                        <tr><td style="color:cd7f32; font-weight:900;">3</td><td>AI마스터</td><td>40,050</td><td>115h</td></tr>
-                        <tr><td>4</td><td>새벽반고래</td><td>38,200</td><td>98h</td></tr>
-                        <tr><td>5</td><td>체어맨</td><td>35,400</td><td>92h</td></tr>
+                        <tr><td style="color:gold; font-weight:900;">🥇 1</td><td style="font-weight:700; color:var(--primary);">aa5467aa</td><td>24,530</td></tr>
+                        <tr><td style="color:silver; font-weight:900;">🥈 2</td><td>열공하는곰</td><td>21,200</td></tr>
+                        <tr><td style="color:cd7f32; font-weight:900;">🥉 3</td><td>몰입요정</td><td>19,450</td></tr>
+                        <tr><td>4</td><td>코딩노예</td><td>18,100</td></tr>
+                        <tr><td>5</td><td>새벽반</td><td>16,500</td></tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3>👥 우리 그룹 랭킹 (<span style="color:var(--primary); font-weight:700;">캡스톤 A팀</span>)</h3>
-                    <a href="create-group.html" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 700; border: 1px solid var(--primary); padding: 6px 12px; border-radius: 20px;">+ 새 그룹 만들기</a>
-                </div>
+                <h3 style="margin-bottom: 20px;">👥 우리 그룹 랭킹 (<span style="color:var(--primary); font-weight:700;">캡스톤 A팀</span>)</h3>
                 <table class="rank-table" style="margin-top: 0;">
                     <thead><tr><th>순위</th><th>이름</th><th>몰입 점수</th><th>오늘 공부</th></tr></thead>
                     <tbody>
@@ -60,7 +72,6 @@
                         <tr><td style="color:silver; font-weight:900;">2</td><td>나 (StudyMaster)</td><td>7,210</td><td>4h 15m</td></tr>
                         <tr><td style="color:cd7f32; font-weight:900;">3</td><td>이영희</td><td>6,800</td><td>3h 50m</td></tr>
                         <tr><td>4</td><td>최미희</td><td>5,200</td><td>2h 10m</td></tr>
-                        <tr><td>5</td><td>박민수</td><td>4,150</td><td>1h 45m</td></tr>
                     </tbody>
                 </table>
             </div>

@@ -8,16 +8,29 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
 </head>
 <body>
-    
 
 <header>
     <a href="main-home.html" class="logo" style="text-decoration: none;">FocusMate</a>
-    <nav>
+    <nav style="display: flex; align-items: center;">
         <a href="control.html">집중분석</a>
-        <a href="report.html">리포트</a>
         <a href="rank.html">전체랭킹</a>
-        <a href="index.html">로그인</a>
-        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
+        <a href="create-group.html" style="color: var(--primary); font-weight: 800;">그룹</a>
+        <div class="user-menu-container">
+            <a href="#" id="userTrigger" onclick="toggleUserDropdown(event)" class="user-menu-trigger">👤 님 ▾</a>
+            <div class="user-dropdown-box" id="userDropdown">
+                <div class="user-info-summary">
+                    <div class="user-info-name"></div>
+                    <div class="user-info-email"></div>
+                    <a href="report.html" class="dropdown-item" style="color: var(--primary); font-weight: bold; padding-left: 0;">📊 나의 몰입 리포트</a>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="#" onclick="handleLeaveGroup(event)" class="dropdown-item">🏃 소속 그룹 탈퇴</a>
+                <a href="#" onclick="handleDeleteAccount(event)" class="dropdown-item danger">❌ 서비스 회원 탈퇴</a>
+                <div class="dropdown-divider"></div>
+                <a href="index.html" class="dropdown-item" style="color: var(--text-sub);">로그아웃</a>
+            </div>
+        </div>
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="margin-left: 25px;">🌙</button>
     </nav>
 </header>
 
@@ -27,65 +40,98 @@
             <div class="auth-info">
                 <h2>새로운 스터디<br>그룹 만들기</h2>
                 <p style="color:var(--text-sub)">팀원들을 모으고 함께 실시간 몰입 경쟁을 시작해 보세요.</p>
-                <div style="margin-top: 30px;"><a href="rank.html" style="color: var(--text-sub); text-decoration: none; font-size: 0.9rem;">← 랭킹 대시보드로 돌아가기</a></div>
+                <div style="margin-top: 30px;">
+                    <button class="btn btn-primary" id="openInviteBtn" style="background: #1e293b; width: 100%; margin-bottom: 12px;">🔑 초대 코드로 그룹 입장하기</button>
+                </div>
             </div>
-            <form id="groupForm">
-                <div class="input-group"><label>그룹 이름</label><input type="text" id="groupName" placeholder="예: 캡스톤 디자인 A팀"></div>
-                <div class="input-group"><label>그룹 한 줄 소개</label><input type="text" placeholder="그룹의 목표를 적어주세요"></div>
-                <div class="input-group"><label>그룹 입장 비밀번호 (선택)</label><input type="password" placeholder="비공개 그룹 설정 시 입력"></div>
-                <button type="button" class="btn btn-primary" onclick="handleCreateGroup()">그룹 개설하기</button>
-                <button type="button" class="btn" style="background:var(--bg); color:var(--primary); border:1px solid var(--primary); margin-top:10px;" onclick="openPasswordModal()">초대 코드로 그룹 입장하기</button>
-                
+
+            <form onsubmit="handleCreateGroup(event)">
+                <div class="input-group">
+                    <label>스터디 그룹 이름</label>
+                    <input type="text" id="groupName" placeholder="예: 캡스톤 디자인 A팀" required>
+                </div>
+                <div class="input-group">
+                    <label>그룹 비밀번호 (선택)</label>
+                    <input type="password" id="createGroupPassword" placeholder="비밀번호 미입력 시 공개 그룹으로 생성됩니다.">
+                </div>
+                <button type="submit" class="btn btn-primary">그룹 개설하기</button>
             </form>
         </div>
     </section>
 </div>
 
-<script src="script.js"></script>
-<script src="group-password.js"></script>
-<script>
-    function handleCreateGroup() {
-        const name = document.getElementById('groupName').value;        
-        if(!name) { alert("그룹 이름을 입력해주세요."); return; }
-        alert(`'${name}' 그룹이 성공적으로 개설되었습니다!`);
-        location.href = 'rank.html';
-    }
-</script>
-<!-- STEP 1: 초대 코드 입력 모달 -->
+<!-- 초대 코드 모달 -->
 <div id="inviteModal" class="modal-overlay hidden">
     <div class="modal-box">
         <h2>그룹 입장</h2>
         <p>초대 코드를 입력하세요.</p>
-        <input
-            type="text"
-            id="inviteCode"
-            placeholder="예: FOCUS-001"
-            style="text-transform: uppercase; letter-spacing: 1px;"
-        >
+        <input type="text" id="inviteCode" placeholder="예: FOCUS-8CA8" style="text-transform: uppercase; letter-spacing: 1px;">
         <p class="modal-error" id="inviteError"></p>
         <div class="modal-buttons">
-            <button class="cancel-btn" onclick="closeModal()">취소</button>
-            <button class="join-btn" onclick="submitInviteCode()">확인</button>
+            <button class="cancel-btn" id="inviteCancelBtn">취소</button>
+            <button class="join-btn" id="inviteSubmitBtn">확인</button>
         </div>
     </div>
 </div>
 
-<!-- STEP 2: 비밀번호 입력 모달 (비밀번호가 있는 그룹에만 표시) -->
+<!-- 비밀번호 모달 -->
 <div id="passwordModal" class="modal-overlay hidden">
     <div class="modal-box">
         <h2>비밀번호 확인</h2>
         <p><span id="pwModalGroupName"></span> 그룹은 비밀번호가 설정되어 있습니다.</p>
-        <input
-            type="password"
-            id="groupPassword"
-            placeholder="비밀번호 입력"
-        >
-        <p class="modal-error" id="modalError"></p>
+        <input type="password" id="groupPassword" placeholder="비밀번호 입력">
+        <p class="modal-error" id="passwordError"></p>
         <div class="modal-buttons">
-            <button class="cancel-btn" onclick="closeModal()">취소</button>
-            <button class="join-btn" onclick="submitPassword()">입장하기</button>
+            <button class="cancel-btn" id="passwordCancelBtn">취소</button>
+            <button class="join-btn" id="passwordSubmitBtn">입장</button>
         </div>
     </div>
 </div>
+
+<script src="script.js"></script>
+<script src="group-password.js"></script>
+<script>
+    // 버튼 이벤트를 onclick 대신 addEventListener로 연결 (더 안정적)
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('openInviteBtn').addEventListener('click', openPasswordModal);
+        document.getElementById('inviteSubmitBtn').addEventListener('click', submitInviteCode);
+        document.getElementById('inviteCancelBtn').addEventListener('click', closeModal);
+        document.getElementById('passwordSubmitBtn').addEventListener('click', submitPassword);
+        document.getElementById('passwordCancelBtn').addEventListener('click', closeModal);
+    });
+
+    async function handleCreateGroup(e) {
+        e.preventDefault();
+        const name     = document.getElementById('groupName').value.trim();
+        const password = document.getElementById('createGroupPassword').value.trim();
+
+        if (!name) { alert("그룹 이름을 입력해주세요."); return; }
+
+        const btn = document.querySelector('#create-group button[type=submit]');
+        if (btn) { btn.disabled = true; btn.textContent = '개설 중...'; }
+
+        try {
+            const res  = await fetch('/api/groups/create', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ name, password })
+            });
+            const data = await res.json();
+
+            if (data.ok) {
+                sessionStorage.setItem('groupId',   data.groupId);
+                sessionStorage.setItem('groupName', data.name);
+                alert(`'${data.name}' 그룹이 개설되었습니다!\n초대 코드: ${data.inviteCode}`);
+                location.href = 'rank.html';
+            } else {
+                alert(data.message || '그룹 개설에 실패했습니다.');
+            }
+        } catch(err) {
+            alert('서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = '그룹 개설하기'; }
+        }
+    }
+</script>
 </body>
 </html>

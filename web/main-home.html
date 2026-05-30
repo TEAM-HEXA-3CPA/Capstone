@@ -11,12 +11,27 @@
 
 <header>
     <a href="main-home.html" class="logo" style="text-decoration: none;">FocusMate</a>
-    <nav>
+    <nav style="display: flex; align-items: center;">
         <a href="control.html">집중분석</a>
-        <a href="report.html">리포트</a>
         <a href="rank.html">전체랭킹</a>
-        <a href="index.html">로그인</a>
-        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
+        <a href="create-group.html">그룹</a>
+        
+        <div class="user-menu-container">
+            <a href="#" id="userTrigger" onclick="toggleUserDropdown(event)" class="user-menu-trigger">👤 aa5467aa님 ▾</a>
+            <div class="user-dropdown-box" id="userDropdown">
+                <div class="user-info-summary">
+                    <div class="user-info-name">aa5467aa</div>
+                    <div class="user-info-email">focusmate_user@yju.ac.kr</div>
+                    <a href="report.html" class="dropdown-item" style="color: var(--primary); font-weight: bold; padding-left: 0;">📊 나의 몰입 리포트</a>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="#" onclick="handleLeaveGroup(event)" class="dropdown-item">🏃 소속 그룹 탈퇴</a>
+                <a href="#" onclick="handleDeleteAccount(event)" class="dropdown-item danger">❌ 서비스 회원 탈퇴</a>
+                <div class="dropdown-divider"></div>
+                <a href="index.html" class="dropdown-item" style="color: var(--text-sub);">로그아웃</a>
+            </div>
+        </div>
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="margin-left: 25px;">🌙</button>
     </nav>
 </header>
 
@@ -25,11 +40,12 @@
         <div class="card" style="text-align: center; padding: 60px 40px;">
             <span style="color: var(--primary); font-weight: 800; font-size: 1.1rem; letter-spacing: 2px; display: block; margin-bottom: 15px;">AI-POWERED STUDY SOLUTION</span>
             <h1 style="font-size: 3rem; font-weight: 800; line-height: 1.3; margin-bottom: 20px;">시선 감지 기술로<br>당신의 몰입을 증명하세요</h1>
-            <p style="color: var(--text-sub); max-width: 600px; margin: 0 auto 40px auto; font-size: 1.1rem; line-height: 1.6;">
-                라즈베리 파이 카메라와 YOLOv8 기반 최첨단 안면 인식 엔진이 실시간으로 졸음과 시선 이탈을 정밀하게 측정합니다.
+            <p style="color: var(--text-sub); max-width: 600px; margin: 0 auto 40px; font-size: 1.1rem; line-height: 1.6;">
+                FocusMate는 라즈베리 파이 카메라를 통해 실시간으로 사용자의 시선และ 자세를 분석하여 최적의 집중 가이드를 제공합니다.
             </p>
-            <div style="max-width: 300px; margin: 0 auto;">
-                <button type="button" class="btn btn-primary" onclick="location.href='index.html'">지금 시작하기</button>
+            <div style="display: flex; justify-content: center; gap: 15px;">
+                <a href="control.html" class="btn btn-primary" style="text-decoration: none;">지금 분석 시작하기</a>
+                <a href="rank.html" class="btn" style="text-decoration: none; border: 1px solid var(--border); background: var(--white); color: var(--text-main);">랭킹 확인하기</a>
             </div>
         </div>
     </section>
