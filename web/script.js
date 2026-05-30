@@ -248,18 +248,21 @@ document.addEventListener('click', function(e) {
 // =================================================================
 function applyNickname(nickname) {
     const trigger = document.getElementById('userTrigger');
-    if (trigger) trigger.textContent = `👤 ${nickname}님 ▾`;
+    if (trigger) trigger.textContent = nickname ? `👤 ${nickname}님 ▾` : '👤 로그인';
 
     const nameEl = document.querySelector('.user-info-name');
-    if (nameEl) nameEl.textContent = nickname;
+    if (nameEl) nameEl.textContent = nickname || '';
 
     const emailEl = document.querySelector('.user-info-email');
-    if (emailEl) emailEl.textContent = `${nickname}`;
+    if (emailEl) emailEl.textContent = nickname || '';
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
     // index.html(로그인 페이지)에서는 드롭다운 없으므로 스킵
     if (!document.getElementById('userTrigger')) return;
+
+    // 기본값을 빈값으로 초기화 (하드코딩 방지)
+    applyNickname('');
 
     try {
         // 1순위: 서버 세션에서 닉네임 가져오기
@@ -277,5 +280,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 2순위: sessionStorage (라이브 서버 / 오프라인 테스트용)
     const saved = sessionStorage.getItem('nickname');
-    if (saved) applyNickname(saved);
+    if (saved) {
+        applyNickname(saved);
+    } else {
+        // 로그인 안 된 상태 → 로그인 페이지로 이동
+        applyNickname('');
+    }
 });

@@ -15,20 +15,19 @@
         <a href="control.html">집중분석</a>
         <a href="rank.html" style="color: var(--primary); font-weight: 800;">전체랭킹</a>
         <a href="create-group.html">그룹</a>
-        
         <div class="user-menu-container">
-            <a href="#" id="userTrigger" onclick="toggleUserDropdown(event)" class="user-menu-trigger">👤 aa5467aa님 ▾</a>
+            <a href="#" id="userTrigger" onclick="toggleUserDropdown(event)" class="user-menu-trigger">👤 님 ▾</a>
             <div class="user-dropdown-box" id="userDropdown">
                 <div class="user-info-summary">
-                    <div class="user-info-name">aa5467aa</div>
-                    <div class="user-info-email">focusmate_user@yju.ac.kr</div>
+                    <div class="user-info-name"></div>
+                    <div class="user-info-email"></div>
                     <a href="report.html" class="dropdown-item" style="color: var(--primary); font-weight: bold; padding-left: 0;">📊 나의 몰입 리포트</a>
                 </div>
                 <div class="dropdown-divider"></div>
                 <a href="#" onclick="handleLeaveGroup(event)" class="dropdown-item">🏃 소속 그룹 탈퇴</a>
                 <a href="#" onclick="handleDeleteAccount(event)" class="dropdown-item danger">❌ 서비스 회원 탈퇴</a>
                 <div class="dropdown-divider"></div>
-                <a href="index.html" class="dropdown-item" style="color: var(--text-sub);">로그아웃</a>
+                <a href="#" onclick="handleLogout(event)" class="dropdown-item" style="color: var(--text-sub);">로그아웃</a>
             </div>
         </div>
         <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="margin-left: 25px;">🌙</button>
@@ -37,48 +36,180 @@
 
 <div class="container">
     <section id="rank">
+
+        <!-- 내 현재 상태 배너 -->
         <div class="my-stats-banner">
             <div>
-                <span style="opacity: 0.8; font-size: 0.9rem;">나의 현재 상태</span>
-                <h3 style="font-size: 1.8rem;">전체 14위 / 그룹 내 2위</h3>
+                <span style="opacity:0.8; font-size:0.9rem;">나의 현재 상태</span>
+                <h3 style="font-size:1.8rem;" id="myRankText">불러오는 중...</h3>
             </div>
-            <div style="text-align: right;">
-                <span style="opacity: 0.8; font-size: 0.9rem;">오늘 획득 점수</span>
-                <h3 style="font-size: 1.8rem; color: #f59e0b;">7,210 pts</h3>
+            <div style="text-align:right;">
+                <span style="opacity:0.8; font-size:0.9rem;">오늘 획득 점수</span>
+                <h3 style="font-size:1.8rem; color:#f59e0b;" id="myScoreText">— pts</h3>
             </div>
         </div>
 
         <div class="rank-grid">
+
+            <!-- 전체 랭킹 -->
             <div class="card">
-                <h3>🌍 전체 실시간 TOP 5</h3>
+                <h3>🌍 전체 실시간 TOP 10</h3>
                 <table class="rank-table">
-                    <thead><tr><th>순위</th><th>닉네임</th><th>몰입 점수</th></tr></thead>
-                    <tbody>
-                        <tr><td style="color:gold; font-weight:900;">🥇 1</td><td style="font-weight:700; color:var(--primary);">aa5467aa</td><td>24,530</td></tr>
-                        <tr><td style="color:silver; font-weight:900;">🥈 2</td><td>열공하는곰</td><td>21,200</td></tr>
-                        <tr><td style="color:cd7f32; font-weight:900;">🥉 3</td><td>몰입요정</td><td>19,450</td></tr>
-                        <tr><td>4</td><td>코딩노예</td><td>18,100</td></tr>
-                        <tr><td>5</td><td>새벽반</td><td>16,500</td></tr>
+                    <thead>
+                        <tr><th>순위</th><th>닉네임</th><th>몰입 점수</th><th>공부 시간</th></tr>
+                    </thead>
+                    <tbody id="globalRankBody">
+                        <tr><td colspan="4" style="text-align:center; color:var(--text-sub); padding:30px;">불러오는 중...</td></tr>
                     </tbody>
                 </table>
             </div>
 
+            <!-- 그룹 랭킹 -->
             <div class="card">
-                <h3 style="margin-bottom: 20px;">👥 우리 그룹 랭킹 (<span style="color:var(--primary); font-weight:700;">캡스톤 A팀</span>)</h3>
-                <table class="rank-table" style="margin-top: 0;">
-                    <thead><tr><th>순위</th><th>이름</th><th>몰입 점수</th><th>오늘 공부</th></tr></thead>
-                    <tbody>
-                        <tr><td style="color:gold; font-weight:900;">1</td><td>김철수</td><td>8,450</td><td>5h 20m</td></tr>
-                        <tr><td style="color:silver; font-weight:900;">2</td><td>나 (StudyMaster)</td><td>7,210</td><td>4h 15m</td></tr>
-                        <tr><td style="color:cd7f32; font-weight:900;">3</td><td>이영희</td><td>6,800</td><td>3h 50m</td></tr>
-                        <tr><td>4</td><td>최미희</td><td>5,200</td><td>2h 10m</td></tr>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h3 id="groupRankTitle">👥 우리 그룹 랭킹</h3>
+                    <a href="create-group.html" style="font-size:0.85rem; color:var(--primary); text-decoration:none; font-weight:700; border:1px solid var(--primary); padding:6px 12px; border-radius:20px;">+ 그룹 관리</a>
+                </div>
+                <table class="rank-table" style="margin-top:0;">
+                    <thead>
+                        <tr><th>순위</th><th>닉네임</th><th>몰입 점수</th><th>공부 시간</th></tr>
+                    </thead>
+                    <tbody id="groupRankBody">
+                        <tr><td colspan="4" style="text-align:center; color:var(--text-sub); padding:30px;">불러오는 중...</td></tr>
                     </tbody>
                 </table>
             </div>
+
         </div>
     </section>
 </div>
 
 <script src="script.js"></script>
+<script>
+const MEDAL = ['🥇', '🥈', '🥉'];
+const MEDAL_COLOR = ['gold', 'silver', '#cd7f32'];
+
+function rankBadge(i) {
+    if (i <= 3) return `<span style="color:${MEDAL_COLOR[i-1]};font-weight:900;">${MEDAL[i-1]} ${i}</span>`;
+    return `<span style="font-weight:600;">${i}</span>`;
+}
+
+function fmt(n) { return Number(n).toLocaleString(); }
+
+// ── 전체 랭킹 ─────────────────────────────────────────────────────
+async function loadGlobalRank() {
+    const tbody = document.getElementById('globalRankBody');
+    try {
+        const res  = await fetch('/api/rank/global');
+        const data = await res.json();
+
+        if (!data.ok || data.data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-sub);padding:30px;">
+                아직 집중 데이터가 없습니다.<br>
+                <small>AI 분석을 시작하면 랭킹이 반영됩니다.</small>
+            </td></tr>`;
+            return;
+        }
+
+        const myNick = sessionStorage.getItem('nickname') || '';
+        tbody.innerHTML = data.data.map(row => `
+            <tr style="${row.nickname === myNick ? 'background:var(--primary-light);' : ''}">
+                <td>${rankBadge(row.rank)}</td>
+                <td style="font-weight:${row.nickname === myNick ? '800' : '500'};
+                           color:${row.nickname === myNick ? 'var(--primary)' : 'inherit'};">
+                    ${row.nickname}${row.nickname === myNick ? ' (나)' : ''}
+                </td>
+                <td>${fmt(row.score)}</td>
+                <td style="color:var(--text-sub);">${row.study_time}</td>
+            </tr>`).join('');
+
+    } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#ef4444;padding:30px;">데이터를 불러올 수 없습니다.</td></tr>`;
+    }
+}
+
+// ── 그룹 랭킹 ─────────────────────────────────────────────────────
+async function loadGroupRank() {
+    const tbody = document.getElementById('groupRankBody');
+    const title = document.getElementById('groupRankTitle');
+    try {
+        const res  = await fetch('/api/rank/group');
+        const data = await res.json();
+
+        // 로그인 안 됨
+        if (!data.ok) {
+            title.innerHTML = `👥 우리 그룹 랭킹`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-sub);padding:30px;">
+                로그인 후 확인하세요.
+            </td></tr>`;
+            return;
+        }
+
+        // 그룹 없음
+        if (!data.group) {
+            title.innerHTML = `👥 우리 그룹 랭킹`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:30px;">
+                <p style="color:var(--text-sub);margin-bottom:12px;">소속된 그룹이 없습니다.</p>
+                <a href="create-group.html" class="btn btn-primary" style="text-decoration:none;font-size:0.85rem;">
+                    그룹 만들기 / 입장하기
+                </a>
+            </td></tr>`;
+            return;
+        }
+
+        // 그룹명 표시 (DB에서 가져온 실제 이름)
+        title.innerHTML = `👥 우리 그룹 랭킹 (<span style="color:var(--primary);font-weight:700;">${data.group.name}</span>)`;
+
+        if (data.data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-sub);padding:30px;">
+                아직 집중 데이터가 없습니다.
+            </td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.data.map(row => `
+            <tr style="${row.is_me ? 'background:var(--primary-light);' : ''}">
+                <td>${rankBadge(row.rank)}</td>
+                <td style="font-weight:${row.is_me ? '800' : '500'};
+                           color:${row.is_me ? 'var(--primary)' : 'inherit'};">
+                    ${row.nickname}${row.is_me ? ' (나)' : ''}
+                </td>
+                <td>${fmt(row.score)}</td>
+                <td style="color:var(--text-sub);">${row.study_time}</td>
+            </tr>`).join('');
+
+    } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#ef4444;padding:30px;">데이터를 불러올 수 없습니다.</td></tr>`;
+    }
+}
+
+// ── 내 점수/순위 배너 ──────────────────────────────────────────────
+async function loadMyStats() {
+    try {
+        const res  = await fetch('/api/rank/me');
+        const data = await res.json();
+        if (!data.ok) return;
+
+        document.getElementById('myRankText').textContent  = `전체 ${data.global_rank}위`;
+        document.getElementById('myScoreText').textContent = `${fmt(data.score)} pts`;
+    } catch(e) {
+        document.getElementById('myRankText').textContent = '데이터 없음';
+    }
+}
+
+// ── 페이지 로드 ────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    loadGlobalRank();
+    loadGroupRank();
+    loadMyStats();
+
+    // 30초마다 자동 갱신
+    setInterval(() => {
+        loadGlobalRank();
+        loadGroupRank();
+        loadMyStats();
+    }, 30000);
+});
+</script>
 </body>
 </html>
