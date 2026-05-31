@@ -17,8 +17,8 @@ RUN pip install --no-cache-dir \
     ultralytics \
     numpy \
     mediapipe
+RUN mkdir -p /tmp/matplotlib && chmod 777 /tmp/matplotlib
 
-RUN mkdir -p /tmp/matplotlib
 ENV MPLCONFIGDIR=/tmp/matplotlib
 
 

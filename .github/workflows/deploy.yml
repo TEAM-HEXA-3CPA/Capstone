@@ -1,0 +1,72 @@
+name: Deploy to ECS
+
+on:
+  push:
+    branches:
+      - main
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECS_CLUSTER: HEXA
+  ECS_SERVICE: hexa-service-1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Web Image
+        run: |
+          docker build \
+            -t hexa_web:web \
+            -f web/Dockerfile.web \
+            ./web
+
+      - name: Tag Web Image
+        run: |
+          docker tag hexa_web:web \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com/hexa_web:web
+
+      - name: Push Web Image
+        run: |
+          docker push \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com/hexa_web:web
+
+      - name: Build Backend Image
+        run: |
+          docker build \
+            -t hexa_backend:backend \
+            -f backend/Dockerfile.backend \
+            ./backend
+
+      - name: Tag Backend Image
+        run: |
+          docker tag hexa_backend:backend \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com/hexa_backend:backend
+
+      - name: Push Backend Image
+        run: |
+          docker push \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com/hexa_backend:backend
+
+      - name: Force New Deployment
+        run: |
+          aws ecs update-service \
+            --cluster HEXA \
+            --service hexa-service-1 \
+            --force-new-deployment
