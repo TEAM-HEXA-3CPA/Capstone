@@ -3,10 +3,10 @@ name: Capstone CI
 on:
   push:
     branches:
-      - dev
+      - main
   pull_request:
     branches:
-      - dev
+      - main
 jobs:
   docker-compose-check:
     runs-on: ubuntu-latest
