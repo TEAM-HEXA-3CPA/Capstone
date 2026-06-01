@@ -2,6 +2,10 @@ import threading
 import uvicorn
 from signup import app as flask_app
 from main import app as fastapi_app
+from rank_api import rank_bp # 👈 [추가] 랭킹 창구 파일 불러오기
+
+# 👈 [추가] Flask 앱에 랭킹 API 주소 창구를 정식으로 등록
+flask_app.register_blueprint(rank_bp)
 
 def run_flask():
     flask_app.run(host="0.0.0.0", port=5000, debug=False)

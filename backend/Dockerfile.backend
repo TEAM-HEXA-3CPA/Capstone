@@ -2,11 +2,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# 1. 미디어파이프 및 OpenCV 구동에 필요한 리눅스 시스템 패키지 보강
 RUN apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# 2. 내부 바이너리 컴파일 및 의존성 꼬임 방지를 위해 pip 기반 도구 최신화
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# 3. 기본 백엔드 및 웹 관련 패키지 먼저 설치
 RUN pip install --no-cache-dir \
     fastapi \
     uvicorn \
@@ -14,13 +22,15 @@ RUN pip install --no-cache-dir \
     pymysql \
     cryptography \
     opencv-python-headless \
-    ultralytics \
-    numpy \
-    mediapipe
+    numpy
+
+# 4. 의존성 충돌을 일으키는 대형 AI 패키지들을 순차적으로 격리 설치
+RUN pip install --no-cache-dir ultralytics
+RUN pip install --no-cache-dir mediapipe==0.10.14
+
+# 5. Matplotlib 캐시 디렉토리 설정
 RUN mkdir -p /tmp/matplotlib && chmod 777 /tmp/matplotlib
-
 ENV MPLCONFIGDIR=/tmp/matplotlib
-
 
 COPY . .
 

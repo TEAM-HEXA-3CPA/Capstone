@@ -14,6 +14,9 @@ services:
       context: ./backend
       dockerfile: Dockerfile.backend
     container_name: focus-backend
+    # 🔥 이 포트 설정을 추가해서 외부 컴퓨터(브라우저)에서 5001번으로 진입할 길을 열었습니다.
+    ports:
+      - "5001:5000"
     expose:
       - "5000"
       - "8000"
