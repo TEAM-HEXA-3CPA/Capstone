@@ -1,92 +1,24 @@
-# HEXA
+# Drowsiness Detection
 
-AWS 기반으로 구축한 웹 서비스 프로젝트입니다.  
-Docker 컨테이너 환경에서 애플리케이션을 실행하고, GitHub Actions를 이용한 CI/CD 파이프라인을 구축하여 자동 배포가 가능하도록 구현하였습니다.
+라즈베리파이5와 Pi Camera Module v3를 이용한 실시간 졸음 감지 시스템입니다.
 
-프로젝트 개요
+MediaPipe Face Landmarker를 활용하여 얼굴 랜드마크를 추출하고, EAR(Eye Aspect Ratio) 값을 기반으로 졸음 여부를 판단합니다.
 
-HEXA는 클라우드 환경에서 실제 서비스 운영 방식을 학습하기 위해 진행한 프로젝트입니다.
+또한 AWS IoT Core MQTT 통신을 통해 EAR 데이터와 사용자 상태를 실시간으로 전송합니다.
 
-주요 목표는 다음과 같습니다.
+## Features
 
-- Docker 기반 컨테이너 환경 구축
-- AWS ECS를 이용한 서비스 운영
-- AWS RDS를 이용한 데이터베이스 연동
-- Application Load Balancer(ALB)를 통한 트래픽 분산
-- GitHub Actions 기반 CI/CD 자동화
-- AWS Secrets Manager를 이용한 민감 정보 관리
+* 실시간 얼굴 랜드마크 추출
+* EAR 기반 눈 감김 감지
+* 졸음 상태 경고 표시
+* AWS IoT Core MQTT 데이터 전송
 
----
+## Files
 
- 기술 스택
- Backend
-- Python
-- Flask
+* `ear_detection_local.py`
 
-Frontend
-- HTML
-- CSS
-- JavaScript
+  * 로컬 환경 졸음 감지 코드
 
- Database
-- MySQL
-- AWS RDS
+* `ear_detection_mqtt.py`
 
-DevOps / Cloud
-- AWS ECS (fargate)
-- AWS ECR
-- AWS RDS
-- AWS ALB
-- AWS Secrets Manager
-- ALB
-- GitHub Actions
-- Docker
-
-ECS 기반 웹 서비스
-사용자
-   ▼
-Application Load Balancer (ALB)
-   ▼
-Amazon ECS (EC2)
-   ├── Nginx Container (web)
-   │       ▼
-   │   Flask Container (backend)
-   ▼
-Amazon RDS (MySQL)
-
-CI/CD 파이프라인
-Developer
-   │
-   ▼
-GitHub Repository
-   │
-   ▼
-GitHub Actions
-   │
-   ├── Docker Build
-   ├── Docker Push
-   │
-   ▼
-Amazon ECR
-   │
-   ▼
-Amazon ECS Service Update
-   │
-   ▼
-New Task Deployment
-
-Raspberry Pi IoT 데이터 수집 파이프라인
-Sensor
-   │
-   ▼
-Raspberry Pi
-(MediaPipe)
-   │
-   ▼
-AWS IoT Core
-   │
-   ▼
-AWS Lambda
-   │
-   ▼
-Amazon RDS
+  * AWS IoT MQTT 연동 버전
