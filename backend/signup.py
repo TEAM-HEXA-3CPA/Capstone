@@ -1,25 +1,25 @@
 import os
 import re
 import pymysql
-import hashlib
+import bcrypt
 from flask import Flask, request, redirect, jsonify, session
 from group_api import groups_bp
 from rank_api import rank_bp
 
 app = Flask(__name__)
 
-# ── 핵심 연계: 모든 블루프린트 라우터 결속 ──
+# ── [핵심 연결선] 모든 블루프린트 라우터 완벽 등록 ──
 app.register_blueprint(groups_bp)
 app.register_blueprint(rank_bp)
 
-# 세션 관리용 보안 키 정의
+# 세션 암호화 키
 app.secret_key = os.environ.get("SECRET_KEY", "focusmate-secret-key-change-in-prod")
 
-# 다른 작업자 변동 내역 호환용 이중 방어 인프라 환경 변수 매핑
-DB_HOST     = os.environ.get("DB_HOST", "localhost")
-DB_USER     = os.environ.get("DB_USER", "admin")
+# 인프라 환경 변수 매핑 (이중 변수 방어)
+DB_HOST     = os.environ.get("DB_HOST",     "localhost")
+DB_USER     = os.environ.get("DB_USER",     "admin")
 DB_PASSWORD = os.environ.get("DB_PASS", os.environ.get("DB_PASSWORD", ""))
-DB_NAME     = os.environ.get("DB_NAME", "hexa")
+DB_NAME     = os.environ.get("DB_NAME",     "hexa")
 DB_PORT     = int(os.environ.get("DB_PORT", 3306))
 
 def get_db():
@@ -33,7 +33,7 @@ def get_db():
         cursorclass=pymysql.cursors.DictCursor
     )
 
-# 기존 비밀번호 정규식 유효성 정책 100% 유지
+# 비밀번호 유효성 검사 (기존 정책 100% 유지)
 def is_valid_password(password):
     if len(password) < 8:
         return False
@@ -50,14 +50,14 @@ def is_valid_password(password):
 def _alert(message):
     return f"<script>alert('{message}'); history.back();</script>"
 
-# ── 회원가입 기능 (기존 폼 양식 로직 완벽 보존) ──
+# ── 회원가입 (신규 유저는 무조건 Bcrypt 암호화) ──
 @app.route("/signup", methods=["POST"])
 def signup():
-    user_id = request.form.get("user_id", "").strip()
+    user_id  = request.form.get("user_id", "").strip()
     password = request.form.get("password", "").strip()
     nickname = request.form.get("nickname", "").strip()
-    email = request.form.get("email", "").strip()
-    phone = request.form.get("phone", "").strip()
+    email    = request.form.get("email", "").strip()
+    phone    = request.form.get("phone", "").strip()
 
     if not (user_id and password and nickname):
         return _alert("필수 입력 항목이 누락되었습니다.")
@@ -72,30 +72,32 @@ def signup():
             if cur.fetchone():
                 return _alert("이미 존재하는 아이디입니다.")
 
-            hashed_pw = hashlib.sha256(password.encode()).hexdigest()
+            # 신규 가입 Bcrypt 해싱 처리
+            salt = bcrypt.gensalt()
+            hashed_pw = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
             sql = """INSERT INTO users (user_id, password, nickname, email, phone) 
                      VALUES (%s, %s, %s, %s, %s)"""
             cur.execute(sql, (user_id, hashed_pw, nickname, email, phone))
         conn.commit()
 
-        session["user_id"] = user_id
+        session["user_id"]  = user_id
         session["nickname"] = nickname
         return redirect("/main-home.html")
     except Exception as e:
-        return f"서버 회원가입 오류: {str(e)}", 500
+        return f"서버 에러: {str(e)}", 500
     finally:
         conn.close()
 
-# ── 로그인 기능 (기존 세션 주입 규칙 완벽 유지) ──
+# ── 로그인 (Bcrypt 검증 + 기존 SHA256 유저 실시간 자동 마이그레이션 적용) ──
 @app.route("/login", methods=["POST"])
 def login():
     if request.is_json:
         data = request.get_json()
-        user_id = data.get("user_id", "").strip()
+        user_id  = data.get("user_id", "").strip()
         password = data.get("password", "").strip()
     else:
-        user_id = request.form.get("user_id", "").strip()
+        user_id  = request.form.get("user_id", "").strip()
         password = request.form.get("password", "").strip()
 
     if not user_id or not password:
@@ -110,14 +112,49 @@ def login():
         if not user:
             return jsonify({"ok": False, "message": "아이디 또는 비밀번호가 올바르지 않습니다."}), 401
 
-        hashed_input_pw = hashlib.sha256(password.encode()).hexdigest()
-        if hashed_input_pw != user["password"]:
+        db_password = user["password"]
+        pw_matched = False
+        need_migration = False
+
+        # 1. Bcrypt 포맷인 경우 검증 ($2b$, $2a$ 등으로 시작하는지 검사하여 Invalid salt 에러 원천 차단)
+        if db_password.startswith("$2b$") or db_password.startswith("$2a$"):
+            try:
+                db_pw_bytes = db_password.encode('utf-8') if isinstance(db_password, str) else db_password
+                if bcrypt.checkpw(password.encode('utf-8'), db_pw_bytes):
+                    pw_matched = True
+            except Exception:
+                pw_matched = False
+        
+        # 2. 예전 포맷(SHA256)인 경우 검증 및 마이그레이션 대상 지정
+        else:
+            import hashlib
+            hashed_input_pw = hashlib.sha256(password.encode('utf-8')).hexdigest()
+            if hashed_input_pw == db_password:
+                pw_matched = True
+                need_migration = True
+
+        if not pw_matched:
             return jsonify({"ok": False, "message": "아이디 또는 비밀번호가 올바르지 않습니다."}), 401
 
-        session["user_id"] = user["user_id"]
+        # 3. 로그인 성공 시점구간 구형 SHA256 유저를 Bcrypt로 강제 업데이트
+        if need_migration:
+            new_salt = bcrypt.gensalt()
+            new_bcrypt_pw = bcrypt.hashpw(password.encode('utf-8'), new_salt).decode('utf-8')
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE users SET password = %s WHERE user_id = %s",
+                        (new_bcrypt_pw, user_id)
+                    )
+                conn.commit()
+                print(f"[MIGRATION] 유저 {user_id} 암호 규격이 최신 Bcrypt로 자동 변경되었습니다.")
+            except Exception as update_err:
+                print(f"[WARN] 마이그레이션 저장 실패: {str(update_err)}")
+
+        # 4. 세션 주입 및 소속 그룹 확인 연계
+        session["user_id"]  = user["user_id"]
         session["nickname"] = user["nickname"]
 
-        # 로그인 시 소속 그룹 아이디 세션 동기화 연계
         with conn.cursor() as cur:
             cur.execute("SELECT group_id FROM group_members WHERE user_id = %s", (user["user_id"],))
             user_group = cur.fetchone()
@@ -125,30 +162,33 @@ def login():
                 session["group_id"] = user_group["group_id"]
 
         return jsonify({
-            "ok": True,
+            "ok":       True,
             "nickname": user["nickname"],
-            "user_id": user["user_id"],
-            "groupId": session.get("group_id", None)
+            "user_id":  user["user_id"],
+            "groupId":  session.get("group_id", None)
         })
+
     except Exception as e:
-        return jsonify({"ok": False, "message": f"서버 내부 로그인 실패: {str(e)}"}), 500
+        return jsonify({"ok": False, "message": f"서버 에러: {str(e)}"}), 500
     finally:
         conn.close()
 
+# ── 로그아웃 ──
 @app.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     return jsonify({"ok": True})
 
+# ── 유저 정보 조회 ──
 @app.route("/me")
 def me():
     if "user_id" not in session:
         return jsonify({"ok": False}), 401
     return jsonify({
-        "ok": True,
-        "user_id": session["user_id"],
+        "ok":       True,
+        "user_id":  session["user_id"],
         "nickname": session["nickname"],
-        "group_id": session.get("group_id", None)
+        "group_id":  session.get("group_id", None)
     })
 
 if __name__ == "__main__":
