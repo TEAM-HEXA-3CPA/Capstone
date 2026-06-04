@@ -63,7 +63,6 @@
 <div class="container">
     <section id="login">
 
-        <!-- ══ 로그인 카드 ══════════════════════════════════════════ -->
         <div class="auth-card card" id="loginSection">
             <div class="auth-info">
                 <h2>다시 몰입할<br>시간입니다.</h2>
@@ -90,7 +89,6 @@
             </div>
         </div>
 
-        <!-- ══ 회원가입 카드 ════════════════════════════════════════ -->
         <div class="auth-card card" id="signupSection" style="display:none;">
             <div class="auth-info">
                 <h2>FocusMate와<br>함께 시작하세요.</h2>
@@ -98,37 +96,31 @@
             </div>
 
             <div>
-                <!-- 이름 -->
                 <div class="input-group">
                     <label for="su_name">이름 <span style="color:var(--text-sub); font-weight:400;">(최대 10자)</span></label>
                     <input type="text" id="su_name" maxlength="10" placeholder="홍길동" required>
                     <span class="field-error" id="su_name_err"></span>
                 </div>
-                <!-- 전화번호 -->
                 <div class="input-group">
                     <label for="su_phone">전화번호 <span style="color:var(--text-sub); font-weight:400;">(-없이 숫자만)</span></label>
                     <input type="tel" id="su_phone" placeholder="01000000000" maxlength="11" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
                     <span class="field-error" id="su_phone_err"></span>
                 </div>
-                <!-- 이메일 -->
                 <div class="input-group">
                     <label for="su_email">이메일</label>
                     <input type="email" id="su_email" placeholder="example@email.com" required>
                     <span class="field-error" id="su_email_err"></span>
                 </div>
-                <!-- 닉네임 -->
                 <div class="input-group">
                     <label for="su_nickname">닉네임 <span style="color:var(--text-sub); font-weight:400;">(최대 10자, 랭킹 표시)</span></label>
                     <input type="text" id="su_nickname" maxlength="10" placeholder="나만의 이름" required>
                     <span class="field-error" id="su_nickname_err"></span>
                 </div>
-                <!-- 아이디 -->
                 <div class="input-group">
                     <label for="su_id">아이디 <span style="color:var(--text-sub); font-weight:400;">(최대 20자)</span></label>
                     <input type="text" id="su_id" maxlength="20" placeholder="ID" autocomplete="username" required>
                     <span class="field-error" id="su_id_err"></span>
                 </div>
-                <!-- 비밀번호 -->
                 <div class="input-group">
                     <label for="su_pw">비밀번호</label>
                     <input type="password" id="su_pw" placeholder="대·소문자·숫자·특수문자 포함 8자 이상"
@@ -137,7 +129,6 @@
                     <span class="pw-hint" id="pwStrengthHint"></span>
                     <span class="field-error" id="su_pw_err"></span>
                 </div>
-                <!-- 비밀번호 확인 -->
                 <div class="input-group">
                     <label for="su_pw2">비밀번호 확인</label>
                     <input type="password" id="su_pw2" placeholder="비밀번호 재입력"
@@ -190,7 +181,7 @@ function checkPwStrength(pw) {
     if (/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(pw)) score++;
 
     const levels = [
-        { w:'0%',   bg:'',          txt:'' },
+        { w:'0%',   bg:'',           txt:'' },
         { w:'20%',  bg:'#ef4444',   txt:'매우 약함' },
         { w:'40%',  bg:'#f97316',   txt:'약함' },
         { w:'60%',  bg:'#eab308',   txt:'보통' },
@@ -249,7 +240,7 @@ async function handleLogin() {
     }
 }
 
-// ── 회원가입 처리 ─────────────────────────────────────────────────────
+// ── 회원가입 처리 (🎯 서버 데이터 검증 동기화 완벽본) ──
 async function handleSignup() {
     const name     = document.getElementById('su_name').value.trim();
     const phone    = document.getElementById('su_phone').value.trim();
@@ -259,26 +250,17 @@ async function handleSignup() {
     const password = document.getElementById('su_pw').value;
     const password2= document.getElementById('su_pw2').value;
 
-    // 에러 초기화
     ['su_name','su_phone','su_email','su_nickname','su_id','su_pw','su_pw2','signup_global'].forEach(id => clearErr(id + '_err'));
     clearErr('signup_global_err');
 
     let valid = true;
-
-    if (!name || name.length > 10)
-        { showErr('su_name_err', '이름은 1~10자여야 합니다.'); valid = false; }
-    if (!phone || !/^[0-9]{10,11}$/.test(phone))
-        { showErr('su_phone_err', '숫자만 10~11자리로 입력해주세요. (예: 01000000000)'); valid = false; }
-    if (!email || !email.includes('@'))
-        { showErr('su_email_err', '올바른 이메일 주소를 입력해주세요.'); valid = false; }
-    if (!nickname || nickname.length > 10)
-        { showErr('su_nickname_err', '닉네임은 1~10자여야 합니다.'); valid = false; }
-    if (!user_id || user_id.length > 20)
-        { showErr('su_id_err', '아이디는 1~20자여야 합니다.'); valid = false; }
-    if (!PW_REGEX.test(password))
-        { showErr('su_pw_err', '대·소문자·숫자·특수문자를 각 1개 이상 포함한 8자 이상이어야 합니다.'); valid = false; }
-    if (password !== password2)
-        { showErr('su_pw2_err', '비밀번호가 일치하지 않습니다.'); valid = false; }
+    if (!name || name.length > 10) { showErr('su_name_err', '이름은 1~10자여야 합니다.'); valid = false; }
+    if (!phone || !/^[0-9]{10,11}$/.test(phone)) { showErr('su_phone_err', '숫자만 10~11자리로 입력해주세요.'); valid = false; }
+    if (!email || !email.includes('@')) { showErr('su_email_err', '올바른 이메일 주소를 입력해주세요.'); valid = false; }
+    if (!nickname || nickname.length > 10) { showErr('su_nickname_err', '닉네임은 1~10자여야 합니다.'); valid = false; }
+    if (!user_id || user_id.length > 20) { showErr('su_id_err', '아이디는 1~20자여야 합니다.'); valid = false; }
+    if (!PW_REGEX.test(password)) { showErr('su_pw_err', '대·소문자·숫자·특수문자 포함 8자 이상이어야 합니다.'); valid = false; }
+    if (password !== password2) { showErr('su_pw2_err', '비밀번호가 일치하지 않습니다.'); valid = false; }
 
     if (!valid) return;
 
@@ -296,17 +278,17 @@ async function handleSignup() {
         form.append('password', password);
 
         const res = await fetch('/signup', { method: 'POST', body: form });
+        const data = await res.json(); // 🎯 서버가 보낸 JSON 데이터를 수령합니다.
 
-        // 서버가 redirect 하면 성공
-        if (res.redirected || res.ok) {
-            sessionStorage.setItem('nickname', nickname);
-            sessionStorage.setItem('user_id',  user_id);
+        if (data.ok) {
+            // 🎯 백엔드 최종 커밋 성공 시에만 팝업을 띄우고 세션에 저장한 뒤 홈으로 보냅니다.
+            alert(data.message); 
+            sessionStorage.setItem('nickname', data.nickname);
+            sessionStorage.setItem('user_id',  data.user_id);
             location.href = 'main-home.html';
         } else {
-            const text = await res.text();
-            // 서버가 alert 스크립트를 보낸 경우 메시지 파싱
-            const match = text.match(/alert\('(.+?)'\)/);
-            showErr('signup_global_err', match ? match[1] : '회원가입 중 오류가 발생했습니다.');
+            // 규칙 위반으로 백엔드가 거부한 경우 빨간색 경고 문구를 띄웁니다.
+            showErr('signup_global_err', data.message);
         }
     } catch (e) {
         showErr('signup_global_err', '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');

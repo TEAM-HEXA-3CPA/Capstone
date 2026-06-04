@@ -50,42 +50,91 @@ def is_valid_password(password):
 def _alert(message):
     return f"<script>alert('{message}'); history.back();</script>"
 
-# ── 회원가입 (신규 유저는 무조건 Bcrypt 암호화) ──
+
+# ── 회원가입 (Bcrypt 암호화 + 랭킹 자동 초기화 + 상세 에러 번역 가드 완벽 연동) ──
 @app.route("/signup", methods=["POST"])
 def signup():
+    # 프론트엔드 FormData에서 유저가 입력한 값을 그대로 수령
     user_id  = request.form.get("user_id", "").strip()
     password = request.form.get("password", "").strip()
     nickname = request.form.get("nickname", "").strip()
     email    = request.form.get("email", "").strip()
     phone    = request.form.get("phone", "").strip()
+    name     = request.form.get("name", "").strip()  # 🎯 임시 기본값 제거 완료!
 
-    if not (user_id and password and nickname):
-        return _alert("필수 입력 항목이 누락되었습니다.")
+    print(f"[DEBUG] 회원가입 시도 - ID: {user_id}, Name: {name}")
+
+    # 🎯 필수 입력 항목 검증에 'name'도 동적으로 체크하도록 포함
+    if not (user_id and password and nickname and name):
+        return jsonify({"ok": False, "message": "필수 입력 항목이 누락되었습니다."}), 400
 
     if not is_valid_password(password):
-        return _alert("비밀번호는 영문 대/소문자, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.")
+        return jsonify({"ok": False, "message": "비밀번호는 영문 대/소문자, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다."}), 400
 
     conn = get_db()
     try:
         with conn.cursor() as cur:
+            # 중복 ID 검사
             cur.execute("SELECT id FROM users WHERE user_id = %s", (user_id,))
             if cur.fetchone():
-                return _alert("이미 존재하는 아이디입니다.")
+                return jsonify({"ok": False, "message": "이미 존재하는 아이디입니다."}), 400
 
             # 신규 가입 Bcrypt 해싱 처리
             salt = bcrypt.gensalt()
             hashed_pw = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
-            sql = """INSERT INTO users (user_id, password, nickname, email, phone) 
-                     VALUES (%s, %s, %s, %s, %s)"""
-            cur.execute(sql, (user_id, hashed_pw, nickname, email, phone))
+            # ① [1단계] users 테이블에 받아온 name 변수를 그대로 주입
+            sql = """INSERT INTO users (user_id, password, nickname, email, phone, name) 
+                     VALUES (%s, %s, %s, %s, %s, %s)"""
+            cur.execute(sql, (user_id, hashed_pw, nickname, email, phone, name))
+            
+            new_user_db_id = cur.lastrowid
+            print(f"[DEBUG] 1단계 성공 - Users 테이블 고유ID 발급 완료: {new_user_db_id}")
+
+            # ② [2단계] 0점짜리 기본 랭킹 데이터 세트 인서트
+            sql_rank = """INSERT INTO user_rankings (user_id, total_score, total_study_time, updated_at)
+                          VALUES (%s, 0, 0, NOW())"""
+            cur.execute(sql_rank, (new_user_db_id,))
+            print(f"[DEBUG] 2단계 성공 - User_rankings 테이블 세팅 완료")
+
+        # 최종 트랜잭션 성공 시 커밋
         conn.commit()
+        print(f"🎉 [SUCCESS] 회원가입 최종 DB 커밋 성공! ID: {user_id}")
 
         session["user_id"]  = user_id
         session["nickname"] = nickname
-        return redirect("/main-home.html")
+        
+        return jsonify({
+            "ok": True, 
+            "message": "🎉 회원가입이 성공적으로 완료되었습니다!", 
+            "user_id": user_id, 
+            "nickname": nickname
+        })
+        
     except Exception as e:
-        return f"서버 에러: {str(e)}", 500
+        conn.rollback()
+        error_msg = str(e)
+        print(f"❌ [SIGNUP ERROR] 회원가입 실패 및 롤백 실행: {error_msg}")
+
+        # PyMySQL 에러 번호 분석 가드
+        if hasattr(e, 'args') and len(e.args) > 0:
+            err_no = e.args[0]
+            if err_no == 3819:
+                if "chk_user_name" in error_msg:
+                    return jsonify({"ok": False, "message": "❌ 이름(실명) 형식이 올바르지 않습니다. (최소 2글자 이상 입력)"}), 400
+                elif "chk_user_id_length" in error_msg:
+                    return jsonify({"ok": False, "message": "❌ 아이디는 최소 8자 이상이어야 합니다."}), 400
+                return jsonify({"ok": False, "message": "❌ 데이터 입력 규칙(Check 제약조건)을 위반했습니다."}), 400
+            elif err_no == 1062:
+                if "nickname" in error_msg:
+                    return jsonify({"ok": False, "message": "❌ 이미 사용 중인 닉네임입니다."}), 400
+                elif "email" in error_msg:
+                    return jsonify({"ok": False, "message": "❌ 이미 등록된 이메일 주소입니다."}), 400
+                elif "phone" in error_msg:
+                    return jsonify({"ok": False, "message": "❌ 이미 등록된 전화번호입니다."}), 400
+                return jsonify({"ok": False, "message": "❌ 중복된 정보가 존재하여 가입할 수 없습니다."}), 400
+
+        return jsonify({"ok": False, "message": f"서버 오류가 발생했습니다: {error_msg}"}), 500
     finally:
         conn.close()
 
@@ -116,7 +165,7 @@ def login():
         pw_matched = False
         need_migration = False
 
-        # 1. Bcrypt 포맷인 경우 검증 ($2b$, $2a$ 등으로 시작하는지 검사하여 Invalid salt 에러 원천 차단)
+        # 1. Bcrypt 포맷인 경우 검증
         if db_password.startswith("$2b$") or db_password.startswith("$2a$"):
             try:
                 db_pw_bytes = db_password.encode('utf-8') if isinstance(db_password, str) else db_password
@@ -156,7 +205,9 @@ def login():
         session["nickname"] = user["nickname"]
 
         with conn.cursor() as cur:
-            cur.execute("SELECT group_id FROM group_members WHERE user_id = %s", (user["user_id"],))
+            # 🎯 [보너스 교정] 명세서 구조상 group_members.user_id 컬럼은 users.id(숫자 일련번호)를 바라보는 FK입니다.
+            # 기존에 문자열 아이디인 user["user_id"]를 넣고 쿼리하던 오류를 진짜 숫자 고유키인 user["id"]로 교정하여 정상 작동하도록 만듭니다.
+            cur.execute("SELECT group_id FROM group_members WHERE user_id = %s", (user["id"],))
             user_group = cur.fetchone()
             if user_group:
                 session["group_id"] = user_group["group_id"]
