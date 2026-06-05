@@ -715,3 +715,11 @@ header nav a:hover {
     background: var(--primary-light);
     color: var(--primary);
 }
+
+/* 그룹 대시보드 */
+.group-container { max-width: 800px; margin: 100px auto 40px auto; }
+.member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; margin-top: 25px; }
+.member-card { background: var(--bg); border: 1px solid var(--border); padding: 20px; border-radius: 20px; text-align: center; }
+.member-time-list { margin-top: 40px; padding: 20px; border-top: 1px solid var(--border); }
+.time-row { display: flex; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+ 
