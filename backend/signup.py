@@ -5,12 +5,14 @@ import bcrypt
 from flask import Flask, request, redirect, jsonify, session
 from group_api import groups_bp
 from rank_api import rank_bp
+from report_api import report_bp
 
 app = Flask(__name__)
 
 # ── [핵심 연결선] 모든 블루프린트 라우터 완벽 등록 ──
 app.register_blueprint(groups_bp)
 app.register_blueprint(rank_bp)
+app.register_blueprint(report_bp)
 
 # 세션 암호화 키
 app.secret_key = os.environ.get("SECRET_KEY", "focusmate-secret-key-change-in-prod")
@@ -54,17 +56,15 @@ def _alert(message):
 # ── 회원가입 (Bcrypt 암호화 + 랭킹 자동 초기화 + 상세 에러 번역 가드 완벽 연동) ──
 @app.route("/signup", methods=["POST"])
 def signup():
-    # 프론트엔드 FormData에서 유저가 입력한 값을 그대로 수령
     user_id  = request.form.get("user_id", "").strip()
     password = request.form.get("password", "").strip()
     nickname = request.form.get("nickname", "").strip()
     email    = request.form.get("email", "").strip()
     phone    = request.form.get("phone", "").strip()
-    name     = request.form.get("name", "").strip()  # 🎯 임시 기본값 제거 완료!
+    name     = request.form.get("name", "").strip()
 
     print(f"[DEBUG] 회원가입 시도 - ID: {user_id}, Name: {name}")
 
-    # 🎯 필수 입력 항목 검증에 'name'도 동적으로 체크하도록 포함
     if not (user_id and password and nickname and name):
         return jsonify({"ok": False, "message": "필수 입력 항목이 누락되었습니다."}), 400
 
@@ -74,16 +74,13 @@ def signup():
     conn = get_db()
     try:
         with conn.cursor() as cur:
-            # 중복 ID 검사
             cur.execute("SELECT id FROM users WHERE user_id = %s", (user_id,))
             if cur.fetchone():
                 return jsonify({"ok": False, "message": "이미 존재하는 아이디입니다."}), 400
 
-            # 신규 가입 Bcrypt 해싱 처리
             salt = bcrypt.gensalt()
             hashed_pw = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
-            # ① [1단계] users 테이블에 받아온 name 변수를 그대로 주입
             sql = """INSERT INTO users (user_id, password, nickname, email, phone, name) 
                      VALUES (%s, %s, %s, %s, %s, %s)"""
             cur.execute(sql, (user_id, hashed_pw, nickname, email, phone, name))
@@ -91,13 +88,11 @@ def signup():
             new_user_db_id = cur.lastrowid
             print(f"[DEBUG] 1단계 성공 - Users 테이블 고유ID 발급 완료: {new_user_db_id}")
 
-            # ② [2단계] 0점짜리 기본 랭킹 데이터 세트 인서트
             sql_rank = """INSERT INTO user_rankings (user_id, total_score, total_study_time, updated_at)
                           VALUES (%s, 0, 0, NOW())"""
             cur.execute(sql_rank, (new_user_db_id,))
             print(f"[DEBUG] 2단계 성공 - User_rankings 테이블 세팅 완료")
 
-        # 최종 트랜잭션 성공 시 커밋
         conn.commit()
         print(f"🎉 [SUCCESS] 회원가입 최종 DB 커밋 성공! ID: {user_id}")
 
@@ -116,7 +111,6 @@ def signup():
         error_msg = str(e)
         print(f"❌ [SIGNUP ERROR] 회원가입 실패 및 롤백 실행: {error_msg}")
 
-        # PyMySQL 에러 번호 분석 가드
         if hasattr(e, 'args') and len(e.args) > 0:
             err_no = e.args[0]
             if err_no == 3819:
@@ -165,7 +159,6 @@ def login():
         pw_matched = False
         need_migration = False
 
-        # 1. Bcrypt 포맷인 경우 검증
         if db_password.startswith("$2b$") or db_password.startswith("$2a$"):
             try:
                 db_pw_bytes = db_password.encode('utf-8') if isinstance(db_password, str) else db_password
@@ -173,8 +166,6 @@ def login():
                     pw_matched = True
             except Exception:
                 pw_matched = False
-        
-        # 2. 예전 포맷(SHA256)인 경우 검증 및 마이그레이션 대상 지정
         else:
             import hashlib
             hashed_input_pw = hashlib.sha256(password.encode('utf-8')).hexdigest()
@@ -185,7 +176,6 @@ def login():
         if not pw_matched:
             return jsonify({"ok": False, "message": "아이디 또는 비밀번호가 올바르지 않습니다."}), 401
 
-        # 3. 로그인 성공 시점구간 구형 SHA256 유저를 Bcrypt로 강제 업데이트
         if need_migration:
             new_salt = bcrypt.gensalt()
             new_bcrypt_pw = bcrypt.hashpw(password.encode('utf-8'), new_salt).decode('utf-8')
@@ -200,13 +190,10 @@ def login():
             except Exception as update_err:
                 print(f"[WARN] 마이그레이션 저장 실패: {str(update_err)}")
 
-        # 4. 세션 주입 및 소속 그룹 확인 연계
         session["user_id"]  = user["user_id"]
         session["nickname"] = user["nickname"]
 
         with conn.cursor() as cur:
-            # 🎯 [보너스 교정] 명세서 구조상 group_members.user_id 컬럼은 users.id(숫자 일련번호)를 바라보는 FK입니다.
-            # 기존에 문자열 아이디인 user["user_id"]를 넣고 쿼리하던 오류를 진짜 숫자 고유키인 user["id"]로 교정하여 정상 작동하도록 만듭니다.
             cur.execute("SELECT group_id FROM group_members WHERE user_id = %s", (user["id"],))
             user_group = cur.fetchone()
             if user_group:
