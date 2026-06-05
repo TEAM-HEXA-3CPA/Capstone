@@ -17,7 +17,6 @@ function toggleTheme() {
     localStorage.setItem("theme", newTheme);
     updateToggleBtnIcon(newTheme);
 
-    // 리포트 대시보드 차트의 색상 변환 갱신을 위한 안전 장치
     if (document.getElementById('lineChart')) {
         location.reload(); 
     }
@@ -81,7 +80,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         };
 
-        // 1. 선형 차트
         window.chartLine = new Chart(lineCanvas, {
             type: 'line',
             data: {
@@ -98,7 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
             options: commonOptions
         });
 
-        // 2. 막대 차트
         window.chartBar = new Chart(barCanvas, {
             type: 'bar',
             data: {
@@ -121,7 +118,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // 3. 레이더 차트
         window.chartRadar = new Chart(radarCanvas, {
             type: 'radar',
             data: {
@@ -151,7 +147,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // 4. 도넛 차트
         window.chartDoughnut = new Chart(doughnutCanvas, {
             type: 'doughnut',
             data: {
@@ -193,13 +188,9 @@ function updateDemoData(type, val) {
     }
 }
 
-/* ... 기존 조원들의 script.js 내용 유지 ... */
-
 // =================================================================
-// 💡 추가: 유저 정보 드롭다운 및 탈퇴 인터랙션 제어
+// 4. 유저 정보 드롭다운 및 탈퇴 인터랙션 제어
 // =================================================================
-
-// 드롭다운 온/오프 토글
 function toggleUserDropdown(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -209,28 +200,50 @@ function toggleUserDropdown(e) {
     }
 }
 
-// 스터디 그룹 탈퇴 처리
 function handleLeaveGroup(e) {
     e.preventDefault();
     if (confirm("정말로 현재 소속된 스터디 그룹에서 탈퇴하시겠습니까?")) {
-        alert("그룹 탈퇴가 완료되었습니다.");
+        fetch('/api/groups/leave', { method: 'POST', credentials: 'include' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    sessionStorage.removeItem('groupId');
+                    sessionStorage.removeItem('groupName');
+                    alert("그룹 탈퇴가 완료되었습니다.");
+                    updateGroupNavLink(null); // 탈퇴 후 링크 → create-group
+                    location.reload();
+                } else {
+                    alert(data.message || "탈퇴 처리 중 오류가 발생했습니다.");
+                }
+            })
+            .catch(() => alert("서버에 연결할 수 없습니다."));
         const dropdown = document.getElementById('userDropdown');
         if (dropdown) dropdown.classList.remove('show');
-        // 추후 이곳에 백엔드 API 연동 구현 예정
     }
 }
 
-// 서비스 회원 탈퇴 처리
 function handleDeleteAccount(e) {
     e.preventDefault();
     if (confirm("⚠️ 정말로 FocusMate 서비스를 탈퇴하시겠습니까?\n탈퇴 시 모든 몰입 데이터와 랭킹 기록이 영구 삭제됩니다.")) {
         alert("회원 탈퇴가 정상 처리되었습니다. 이용해 주셔서 감사합니다.");
-        sessionStorage.removeItem('nickname');
+        sessionStorage.clear();
         location.href = 'index.html';
     }
 }
 
-// 빈 공간 이중 클릭 또는 외부 영역 터치 시 드롭다운 자동 폐쇄
+function handleLogout(e) {
+    e.preventDefault();
+    fetch('/logout', { method: 'POST', credentials: 'include' })
+        .then(() => {
+            sessionStorage.clear();
+            location.href = 'index.html';
+        })
+        .catch(() => {
+            sessionStorage.clear();
+            location.href = 'index.html';
+        });
+}
+
 document.addEventListener('click', function(e) {
     const dropdown = document.getElementById('userDropdown');
     const trigger = document.getElementById('userTrigger');
@@ -242,9 +255,26 @@ document.addEventListener('click', function(e) {
 });
 
 // =================================================================
-// 💡 추가: 닉네임 → 드롭다운 실시간 반영
-//    우선순위: /me API → sessionStorage 순으로 시도
-//    (main-home, control, rank, report 공통 적용)
+// 5. 그룹 네비게이션 링크 동적 변경
+//    - 그룹 있음 → group-dashboard.html
+//    - 그룹 없음 → create-group.html
+// =================================================================
+function updateGroupNavLink(groupId) {
+    // 헤더 nav 안의 그룹 링크 찾기 (href에 group 포함된 a 태그)
+    const groupLinks = document.querySelectorAll('nav a[href*="group"]');
+    groupLinks.forEach(link => {
+        if (groupId) {
+            link.href = 'group-dashboard.html';
+            link.title = '내 그룹 대시보드';
+        } else {
+            link.href = 'create-group.html';
+            link.title = '그룹 만들기 / 입장';
+        }
+    });
+}
+
+// =================================================================
+// 6. 닉네임 → 드롭다운 실시간 반영 + 그룹 링크 동적 적용
 // =================================================================
 function applyNickname(nickname) {
     const trigger = document.getElementById('userTrigger');
@@ -258,32 +288,37 @@ function applyNickname(nickname) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // index.html(로그인 페이지)에서는 드롭다운 없으므로 스킵
     if (!document.getElementById('userTrigger')) return;
 
-    // 기본값을 빈값으로 초기화 (하드코딩 방지)
     applyNickname('');
 
     try {
-        // 1순위: 서버 세션에서 닉네임 가져오기
-        const res = await fetch('/me');
+        const res = await fetch('/me', { credentials: 'include' });
         if (res.ok) {
             const data = await res.json();
             if (data.ok && data.nickname) {
                 sessionStorage.setItem('nickname', data.nickname);
                 sessionStorage.setItem('user_id',  data.user_id);
+                if (data.group_id) {
+                    sessionStorage.setItem('groupId', data.group_id);
+                } else {
+                    sessionStorage.removeItem('groupId');
+                }
                 applyNickname(data.nickname);
+                updateGroupNavLink(data.group_id); // ★ 그룹 링크 적용
                 return;
             }
         }
     } catch (_) { /* 서버 없을 때 fallback */ }
 
-    // 2순위: sessionStorage (라이브 서버 / 오프라인 테스트용)
+    // fallback: sessionStorage
     const saved = sessionStorage.getItem('nickname');
+    const savedGroupId = sessionStorage.getItem('groupId');
     if (saved) {
         applyNickname(saved);
+        updateGroupNavLink(savedGroupId); // ★ 그룹 링크 적용
     } else {
-        // 로그인 안 된 상태 → 로그인 페이지로 이동
         applyNickname('');
+        updateGroupNavLink(null);
     }
 });

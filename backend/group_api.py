@@ -308,3 +308,44 @@ def leave_group():
 
     finally:
         conn.close()
+
+# =================================================================
+# 내 그룹 초대코드 조회
+# GET /api/groups/my-code
+# =================================================================
+@groups_bp.route("/my-code", methods=["GET"])
+def my_code():
+    err = _login_required()
+    if err:
+        return err
+
+    user_id_str = session["user_id"]
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM users WHERE user_id = %s", (user_id_str,))
+            user_record = cur.fetchone()
+            if not user_record:
+                return jsonify({"ok": False, "message": "존재하지 않는 회원입니다."}), 404
+
+            real_user_id = user_record["id"]
+
+            cur.execute("""
+                SELECT sg.invite_code, sg.name
+                FROM group_members gm
+                JOIN study_groups sg ON gm.group_id = sg.group_id
+                WHERE gm.user_id = %s
+                LIMIT 1
+            """, (real_user_id,))
+            group = cur.fetchone()
+
+        if not group:
+            return jsonify({"ok": False, "message": "소속된 그룹이 없습니다."}), 404
+
+        return jsonify({"ok": True, "invite_code": group["invite_code"], "name": group["name"]})
+
+    except Exception as e:
+        return jsonify({"ok": False, "message": f"서버 에러: {str(e)}"}), 500
+    finally:
+        conn.close()
