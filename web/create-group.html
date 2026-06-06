@@ -92,6 +92,27 @@
 <script src="script.js"></script>
 <script src="group-password.js"></script>
 <script>
+// ★ 그룹 있으면 대시보드로 리다이렉트 (1회만 실행)
+if (!sessionStorage.getItem('_grpChk')) {
+    sessionStorage.setItem('_grpChk', '1');
+    (async function checkGroupRedirect() {
+        if (!Auth.isLoggedIn()) return;
+        try {
+            const res  = await Auth.fetch('/api/rank/group');
+            const data = await res.json();
+            if (data.ok && data.group) {
+                sessionStorage.removeItem('_grpChk');
+                location.href = 'group-dashboard.html';
+            } else {
+                sessionStorage.removeItem('_grpChk');
+            }
+        } catch(_) {
+            sessionStorage.removeItem('_grpChk');
+        }
+    })();
+}
+</script>
+<script>
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('openInviteBtn').addEventListener('click', openPasswordModal);
         document.getElementById('inviteSubmitBtn').addEventListener('click', submitInviteCode);

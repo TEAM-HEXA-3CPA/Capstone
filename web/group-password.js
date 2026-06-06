@@ -59,9 +59,8 @@ async function submitInviteCode() {
     setLoading('inviteSubmitBtn', true, '확인');
 
     try {
-        const res  = await fetch('/api/groups/verify-invite', {
+        const res  = await Auth.fetch('/api/groups/verify-invite', {
             method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ code })
         });
         const data = await res.json();
@@ -136,9 +135,8 @@ async function enterGroup(password = '') {
     if (!pendingGroup) return;
 
     try {
-        const res  = await fetch('/api/groups/join', {
+        const res  = await Auth.fetch('/api/groups/join', {
             method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({
                 code:     pendingGroup.code,
                 password: password

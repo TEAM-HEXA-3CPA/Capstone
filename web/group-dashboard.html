@@ -258,14 +258,17 @@
 <script src="script.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-    const userId = sessionStorage.getItem('user_id') || '';
-
     try {
-        const res  = await fetch(`/api/rank/group?user_id=${userId}`, { credentials: 'include' });
+        const res  = await Auth.fetch('/api/rank/group');
         const data = await res.json();
 
         if (!data.ok || !data.group) {
-            location.href = 'create-group.html';
+            // 그룹 없음 - 안내만 표시
+            document.getElementById('dashGroupName').textContent = '소속된 그룹이 없습니다';
+            document.getElementById('dashInviteCode').textContent = '-';
+            document.getElementById('statMembers').textContent  = '0명';
+            document.getElementById('statTopScore').textContent  = '0pts';
+            document.getElementById('statMyRank').textContent    = '-';
             return;
         }
 
@@ -282,7 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 초대코드
         try {
-            const codeRes  = await fetch('/api/groups/my-code', { credentials: 'include' });
+            const codeRes  = await Auth.fetch('/api/groups/my-code');
             const codeData = await codeRes.json();
             if (codeData.ok) {
                 document.getElementById('dashInviteCode').textContent = codeData.invite_code;
