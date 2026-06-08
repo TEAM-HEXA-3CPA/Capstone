@@ -327,9 +327,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
         }
-        Auth.clear();
-        location.href = 'index.html';
+        // 401(토큰 만료)일 때만 로그아웃, 네트워크 오류 등은 로컬 정보로 유지
+        if (res.status === 401) {
+            Auth.clear();
+            location.href = 'index.html';
+            return;
+        }
+        // 그 외 서버 오류 → localStorage 토큰 유지, sessionStorage로 fallback
+        const saved = sessionStorage.getItem('nickname');
+        if (saved) {
+            applyNickname(saved);
+            updateGroupNavLink(sessionStorage.getItem('groupId'));
+        }
     } catch (_) {
+        // 네트워크 오류 → 토큰 유지, sessionStorage로 fallback
         const saved = sessionStorage.getItem('nickname');
         if (saved) {
             applyNickname(saved);
