@@ -423,13 +423,18 @@ async function loadWeeklyReport() {
     updateDateBadge();
     setStateBox('⏳', '데이터를 불러오는 중입니다...');
 
+    // JWT 토큰 없으면 로그인 안내
+    if (!Auth.isLoggedIn()) {
+        setStateBox('🔒', '로그인 후 이용할 수 있습니다.');
+        return;
+    }
+
     try {
-        const res = await fetch('/api/report/weekly', {
-            method: 'GET',
-            credentials: 'include'   // Flask 세션 쿠키 포함
+        const res = await Auth.fetch('/api/report/weekly', {
+            method: 'GET'
         });
 
-        // 로그인 안 된 경우
+        // 토큰 만료 또는 미로그인
         if (res.status === 401) {
             setStateBox('🔒', '로그인 후 이용할 수 있습니다.');
             return;
