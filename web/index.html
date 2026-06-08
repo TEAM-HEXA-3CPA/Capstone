@@ -120,6 +120,14 @@
 
 <script src="script.js"></script>
 <script>
+// ★ 이미 로그인된 상태면 메인으로 이동
+(function checkAlreadyLoggedIn() {
+    if (Auth.isLoggedIn()) {
+        location.replace('main-home.html');
+    }
+})();
+</script>
+<script>
 function toggleAuthView(view) {
     document.getElementById('login').style.display  = view === 'signup' ? 'none'  : 'block';
     document.getElementById('signup').style.display = view === 'signup' ? 'block' : 'none';
