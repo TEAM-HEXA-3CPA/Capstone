@@ -15,6 +15,7 @@
         <a href="control.html">집중분석</a>
         <a href="rank.html">전체랭킹</a>
         <a href="create-group.html" style="color: var(--primary); font-weight: 800;">그룹</a>
+
         <div class="user-menu-container">
             <a href="#" id="userTrigger" onclick="toggleUserDropdown(event)" class="user-menu-trigger">👤 님 ▾</a>
             <div class="user-dropdown-box" id="userDropdown">
@@ -27,7 +28,7 @@
                 <a href="#" onclick="handleLeaveGroup(event)" class="dropdown-item">🏃 소속 그룹 탈퇴</a>
                 <a href="#" onclick="handleDeleteAccount(event)" class="dropdown-item danger">❌ 서비스 회원 탈퇴</a>
                 <div class="dropdown-divider"></div>
-                <a href="index.html" class="dropdown-item" style="color: var(--text-sub);">로그아웃</a>
+                <a href="#" onclick="handleLogout(event)" class="dropdown-item" style="color: var(--text-sub);">로그아웃</a>
             </div>
         </div>
         <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="margin-left: 25px;">🌙</button>
@@ -91,7 +92,27 @@
 <script src="script.js"></script>
 <script src="group-password.js"></script>
 <script>
-    // 버튼 이벤트를 onclick 대신 addEventListener로 연결 (더 안정적)
+// ★ 그룹 있으면 대시보드로 리다이렉트 (1회만 실행)
+if (!sessionStorage.getItem('_grpChk')) {
+    sessionStorage.setItem('_grpChk', '1');
+    (async function checkGroupRedirect() {
+        if (!Auth.isLoggedIn()) return;
+        try {
+            const res  = await Auth.fetch('/api/rank/group');
+            const data = await res.json();
+            if (data.ok && data.group) {
+                sessionStorage.removeItem('_grpChk');
+                location.href = 'group-dashboard.html';
+            } else {
+                sessionStorage.removeItem('_grpChk');
+            }
+        } catch(_) {
+            sessionStorage.removeItem('_grpChk');
+        }
+    })();
+}
+</script>
+<script>
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('openInviteBtn').addEventListener('click', openPasswordModal);
         document.getElementById('inviteSubmitBtn').addEventListener('click', submitInviteCode);
@@ -104,25 +125,21 @@
         e.preventDefault();
         const name     = document.getElementById('groupName').value.trim();
         const password = document.getElementById('createGroupPassword').value.trim();
-
         if (!name) { alert("그룹 이름을 입력해주세요."); return; }
-
         const btn = document.querySelector('#create-group button[type=submit]');
         if (btn) { btn.disabled = true; btn.textContent = '개설 중...'; }
-
         try {
             const res  = await fetch('/api/groups/create', {
-                method:  'POST',
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ name, password })
+                body: JSON.stringify({ name, password })
             });
             const data = await res.json();
-
             if (data.ok) {
                 sessionStorage.setItem('groupId',   data.groupId);
                 sessionStorage.setItem('groupName', data.name);
                 alert(`'${data.name}' 그룹이 개설되었습니다!\n초대 코드: ${data.inviteCode}`);
-                location.href = 'rank.html';
+                location.href = 'group-dashboard.html';
             } else {
                 alert(data.message || '그룹 개설에 실패했습니다.');
             }

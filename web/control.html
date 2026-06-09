@@ -14,7 +14,8 @@
     <nav style="display: flex; align-items: center;">
         <a href="control.html" style="color: var(--primary); font-weight: 800;">집중분석</a>
         <a href="rank.html">전체랭킹</a>
-        
+        <a href="create-group.html">그룹</a>
+
         <div class="user-menu-container">
             <a href="#" id="userTrigger" onclick="toggleUserDropdown(event)" class="user-menu-trigger">👤 님 ▾</a>
             <div class="user-dropdown-box" id="userDropdown">
@@ -27,7 +28,7 @@
                 <a href="#" onclick="handleLeaveGroup(event)" class="dropdown-item">🏃 소속 그룹 탈퇴</a>
                 <a href="#" onclick="handleDeleteAccount(event)" class="dropdown-item danger">❌ 서비스 회원 탈퇴</a>
                 <div class="dropdown-divider"></div>
-                <a href="index.html" class="dropdown-item" style="color: var(--text-sub);">로그아웃</a>
+                <a href="#" onclick="handleLogout(event)" class="dropdown-item" style="color: var(--text-sub);">로그아웃</a>
             </div>
         </div>
         <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="margin-left: 25px;">🌙</button>

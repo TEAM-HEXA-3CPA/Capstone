@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusMate | 그룹 대시보드</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <style>
+        .dash-hero {
+            background: linear-gradient(135deg, var(--primary) 0%, #00c47a 100%);
+            border-radius: 20px;
+            padding: 32px 36px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+        }
+        .dash-hero h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin: 0 0 6px;
+            color: #fff;
+        }
+        .dash-hero p {
+            font-size: 0.88rem;
+            opacity: 0.85;
+            margin: 0;
+        }
+        .invite-chip {
+            background: rgba(255,255,255,0.18);
+            border: 1.5px solid rgba(255,255,255,0.4);
+            border-radius: 99px;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .invite-chip:hover { background: rgba(255,255,255,0.28); }
+        .invite-chip .chip-icon { font-size: 1rem; }
+
+        /* 통계 카드 행 */
+        .dash-stat-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .dash-stat-card {
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px 20px;
+            text-align: center;
+        }
+        .dash-stat-card .stat-num {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        .dash-stat-card .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+
+        /* 멤버 그리드 */
+        .member-section-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin: 0 0 14px;
+        }
+        .member-grid-new {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .member-card-new {
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 12px 16px;
+            text-align: center;
+            transition: transform 0.15s, box-shadow 0.15s;
+            cursor: default;
+        }
+        .member-card-new:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,148,96,0.10);
+        }
+        .member-card-new.is-me {
+            border: 2px solid var(--primary);
+            background: var(--primary-light, #e6f7f1);
+        }
+        .avatar {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: var(--primary-light, #e6f7f1);
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .member-card-new.is-me .avatar {
+            background: var(--primary);
+            color: #fff;
+        }
+        .member-name {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .member-rank-badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 99px;
+            background: var(--border);
+            color: var(--text-sub);
+        }
+        .member-rank-badge.rank-1 { background: #fef3c7; color: #92400e; }
+        .member-rank-badge.rank-2 { background: #f1f5f9; color: #475569; }
+        .member-rank-badge.rank-3 { background: #fce7f3; color: #9d174d; }
+
+        /* 랭킹 테이블 */
+        .rank-list { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .rank-list th {
+            text-align: left;
+            padding: 8px 12px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            border-bottom: 1px solid var(--border);
+        }
+        .rank-list td {
+            padding: 12px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+        .rank-list tr:last-child td { border-bottom: none; }
+        .rank-list tr.me-row td { color: var(--primary); font-weight: 700; }
+        .score-mini-bar {
+            height: 5px;
+            border-radius: 3px;
+            background: var(--border);
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        .score-mini-fill { height: 5px; border-radius: 3px; background: var(--primary); }
+        .rank-num { font-weight: 800; font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="main-home.html" class="logo" style="text-decoration: none;">FocusMate</a>
+    <nav style="display: flex; align-items: center;">
+        <a href="control.html">집중분석</a>
+        <a href="rank.html">전체랭킹</a>
+        <a href="group-dashboard.html" style="color: var(--primary); font-weight: 800;">그룹</a>
+        <div class="user-menu-container">
+            <a href="#" id="userTrigger" onclick="toggleUserDropdown(event)" class="user-menu-trigger">👤 님 ▾</a>
+            <div class="user-dropdown-box" id="userDropdown">
+                <div class="user-info-summary">
+                    <div class="user-info-name"></div>
+                    <div class="user-info-email"></div>
+                    <a href="report.html" class="dropdown-item" style="color: var(--primary); font-weight: bold; padding-left: 0;">📊 나의 몰입 리포트</a>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="#" onclick="handleLeaveGroup(event)" class="dropdown-item">🏃 소속 그룹 탈퇴</a>
+                <a href="#" onclick="handleDeleteAccount(event)" class="dropdown-item danger">❌ 서비스 회원 탈퇴</a>
+                <div class="dropdown-divider"></div>
+                <a href="#" onclick="handleLogout(event)" class="dropdown-item" style="color: var(--text-sub);">로그아웃</a>
+            </div>
+        </div>
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="margin-left: 25px;">🌙</button>
+    </nav>
+</header>
+
+<div class="container" style="padding-top: 100px; max-width: 860px;">
+
+    <!-- 히어로 배너 -->
+    <div class="dash-hero">
+        <div>
+            <h2 id="dashGroupName">-</h2>
+            <p>팀원들과 함께 집중력을 키워보세요 💪</p>
+        </div>
+        <div id="code-btn" class="invite-chip">
+            <span class="chip-icon">🔑</span>
+            <span id="dashInviteCode">로딩 중...</span>
+            <span style="opacity:0.7; font-size:0.75rem;">복사</span>
+        </div>
+    </div>
+
+    <!-- 통계 요약 -->
+    <div class="dash-stat-row">
+        <div class="dash-stat-card">
+            <div class="stat-num" id="statMembers">-</div>
+            <div class="stat-label">팀원 수</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="stat-num" id="statTopScore">-</div>
+            <div class="stat-label">최고 점수</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="stat-num" id="statMyRank">-</div>
+            <div class="stat-label">내 그룹 순위</div>
+        </div>
+    </div>
+
+    <!-- 멤버 카드 -->
+    <div style="background: var(--card-bg, #fff); border: 1px solid var(--border); border-radius: 20px; padding: 24px 26px; margin-bottom: 20px;">
+        <p class="member-section-title">팀원 현황</p>
+        <div class="member-grid-new" id="memberGrid"></div>
+    </div>
+
+    <!-- 랭킹 테이블 -->
+    <div style="background: var(--card-bg, #fff); border: 1px solid var(--border); border-radius: 20px; padding: 24px 26px; margin-bottom: 40px;">
+        <p class="member-section-title">그룹 내 랭킹</p>
+        <table class="rank-list">
+            <thead>
+                <tr>
+                    <th style="width:50px">순위</th>
+                    <th>닉네임</th>
+                    <th style="width:120px">누적 점수</th>
+                    <th style="width:100px">학습 시간</th>
+                </tr>
+            </thead>
+            <tbody id="rankTableBody"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const res  = await Auth.fetch('/api/rank/group');
+        const data = await res.json();
+
+        if (!data.ok || !data.group) {
+            // 그룹 없음 - 안내만 표시
+            document.getElementById('dashGroupName').textContent = '소속된 그룹이 없습니다';
+            document.getElementById('dashInviteCode').textContent = '-';
+            document.getElementById('statMembers').textContent  = '0명';
+            document.getElementById('statTopScore').textContent  = '0pts';
+            document.getElementById('statMyRank').textContent    = '-';
+            return;
+        }
+
+        // 그룹명
+        document.getElementById('dashGroupName').textContent = data.group.name;
+
+        // 통계
+        const members = data.data;
+        const topScore = members.length ? Math.max(...members.map(m => m.score)) : 0;
+        const myRank   = data.my_rank || '-';
+        document.getElementById('statMembers').textContent  = members.length + '명';
+        document.getElementById('statTopScore').textContent = topScore.toLocaleString() + 'pts';
+        document.getElementById('statMyRank').textContent   = myRank + '위';
+
+        // 초대코드
+        try {
+            const codeRes  = await Auth.fetch('/api/groups/my-code');
+            const codeData = await codeRes.json();
+            if (codeData.ok) {
+                document.getElementById('dashInviteCode').textContent = codeData.invite_code;
+                document.getElementById('code-btn').onclick = () => {
+                    navigator.clipboard.writeText(codeData.invite_code)
+                        .then(() => alert(`초대 코드 복사 완료: ${codeData.invite_code}`))
+                        .catch(() => alert(`초대 코드: ${codeData.invite_code}`));
+                };
+            }
+        } catch(_) {}
+
+        // 멤버 카드
+        const grid = document.getElementById('memberGrid');
+        grid.innerHTML = '';
+        members.forEach(m => {
+            const rankClass = m.rank === 1 ? 'rank-1' : m.rank === 2 ? 'rank-2' : m.rank === 3 ? 'rank-3' : '';
+            const rankEmoji = m.rank === 1 ? '🥇' : m.rank === 2 ? '🥈' : m.rank === 3 ? '🥉' : `${m.rank}위`;
+            grid.innerHTML += `
+                <div class="member-card-new ${m.is_me ? 'is-me' : ''}">
+                    <div class="avatar">${m.nickname.charAt(0)}</div>
+                    <div class="member-name">${m.nickname}</div>
+                    <span class="member-rank-badge ${rankClass}">${rankEmoji}</span>
+                </div>
+            `;
+        });
+
+        // 랭킹 테이블
+        const tbody = document.getElementById('rankTableBody');
+        tbody.innerHTML = '';
+        const maxScore = topScore || 1;
+        members.forEach(m => {
+            const rankEmoji = m.rank === 1 ? '🥇' : m.rank === 2 ? '🥈' : m.rank === 3 ? '🥉' : m.rank;
+            const pct = Math.round((m.score / maxScore) * 100);
+            tbody.innerHTML += `
+                <tr class="${m.is_me ? 'me-row' : ''}">
+                    <td><span class="rank-num">${rankEmoji}</span></td>
+                    <td>${m.nickname}${m.is_me ? ' <span style="font-size:0.72rem; background:var(--primary-light); color:var(--primary); padding:1px 7px; border-radius:99px; font-weight:700;">나</span>' : ''}</td>
+                    <td>
+                        <div>${m.score.toLocaleString()}pts</div>
+                        <div class="score-mini-bar"><div class="score-mini-fill" style="width:${pct}%"></div></div>
+                    </td>
+                    <td>${m.study_time}</td>
+                </tr>
+            `;
+        });
+
+    } catch(e) {
+        console.error('그룹 대시보드 로드 실패:', e);
+    }
+});
+</script>
+</body>
+</html>

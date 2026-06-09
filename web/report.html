@@ -7,6 +7,102 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+
+    <style>
+        /* ── 주간 집중도 섹션 전용 스타일 ── */
+        .weekly-section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 40px 0 20px;
+        }
+        .weekly-section-title h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+        .weekly-section-title .section-sub { font-size: 0.82rem; color: var(--text-sub); }
+
+        .weekly-metric-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 768px) { .weekly-metric-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .weekly-metric-card {
+            background: var(--card-bg, #f8f9ff);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 18px;
+        }
+        .weekly-metric-card .wm-label { font-size: 0.75rem; color: var(--text-sub); margin: 0 0 8px; font-weight: 600; }
+        .weekly-metric-card .wm-val   { font-size: 1.6rem; font-weight: 800; color: var(--primary); line-height: 1; margin: 0; }
+        .weekly-metric-card .wm-val span { font-size: 0.9rem; font-weight: 500; color: var(--text-sub); }
+        .weekly-metric-card .wm-sub   { font-size: 0.72rem; color: var(--text-sub); margin: 6px 0 0; }
+
+        .weekly-chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 768px) { .weekly-chart-row { grid-template-columns: 1fr; } }
+
+        .weekly-chart-card {
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 22px;
+        }
+        .weekly-chart-card .wc-title {
+            font-size: 0.8rem; font-weight: 700; color: var(--text-sub);
+            letter-spacing: 0.05em; text-transform: uppercase; margin: 0 0 10px;
+        }
+        .weekly-chart-card .wc-legend {
+            display: flex; flex-wrap: wrap; gap: 12px;
+            margin-bottom: 12px; font-size: 0.75rem; color: var(--text-sub);
+        }
+        .weekly-chart-card .wc-legend span { display: flex; align-items: center; gap: 5px; }
+        .legend-sq { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+        .wc-canvas-wrap      { position: relative; width: 100%; height: 200px; }
+        .wc-canvas-wrap-wide { position: relative; width: 100%; height: 220px; }
+
+        .weekly-table-card {
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 22px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        .weekly-table-card .wc-title {
+            font-size: 0.8rem; font-weight: 700; color: var(--text-sub);
+            letter-spacing: 0.05em; text-transform: uppercase; margin: 0 0 14px;
+        }
+        .session-tbl { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .session-tbl th {
+            text-align: left; padding: 8px 10px; font-size: 0.72rem;
+            font-weight: 700; color: var(--text-sub); border-bottom: 1px solid var(--border);
+        }
+        .session-tbl td {
+            padding: 10px; border-bottom: 1px solid var(--border);
+            color: var(--text-main, #1a1a2e); vertical-align: middle;
+        }
+        .session-tbl tr:last-child td { border-bottom: none; }
+        .score-bar-bg  { background: var(--border); border-radius: 4px; height: 6px; width: 80px; display: inline-block; vertical-align: middle; }
+        .score-bar-fill { height: 6px; border-radius: 4px; }
+        .badge { display: inline-block; font-size: 0.7rem; padding: 3px 9px; border-radius: 99px; font-weight: 700; }
+        .badge-good { background: #eaf3de; color: #3b6d11; }
+        .badge-mid  { background: #faeeda; color: #854f0b; }
+        .badge-bad  { background: #fcebeb; color: #a32d2d; }
+
+        /* 로딩 / 에러 상태 */
+        .weekly-state-box {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-sub);
+            font-size: 0.9rem;
+        }
+        .weekly-state-box .state-icon { font-size: 2rem; margin-bottom: 10px; }
+    </style>
 </head>
 <body>
 
@@ -15,7 +111,6 @@
     <nav style="display: flex; align-items: center;">
         <a href="control.html">집중분석</a>
         <a href="rank.html">전체랭킹</a>
-        
         <div class="user-menu-container">
             <a href="#" id="userTrigger" onclick="toggleUserDropdown(event)" class="user-menu-trigger">👤 님 ▾</a>
             <div class="user-dropdown-box" id="userDropdown">
@@ -37,56 +132,344 @@
 
 <div class="container">
     <section id="report" style="padding-top: 100px;">
+
         <div class="report-header">
             <div>
                 <h2>종합 몰입 분석 보고서</h2>
                 <p style="color: var(--text-sub); margin-top: 5px;">인공지능 모델이 정밀하게 정형화한 세부 집중 분석 데이터입니다.</p>
             </div>
-            <div class="date-badge">2024년 11월 17일 기준</div>
+            <div class="date-badge" id="reportDateBadge">불러오는 중...</div>
         </div>
 
-        <div class="report-grid">
-            <div class="card">
-                <h3>📈 최근 5일간 몰입도 추이</h3>
-                <div class="chart-container">
-                    <canvas id="lineChart"></canvas>
-                </div>
-            </div>
-            <div class="card">
-                <h3>📊 오늘 하루 집중도 분포 비중</h3>
-                <div class="chart-container">
-                    <canvas id="doughnutChart"></canvas>
-                </div>
-            </div>
+        <!-- ════════════════════════════════════
+             주간 집중도 상세 분석
+             ════════════════════════════════════ -->
+        <div class="weekly-section-title" style="margin-top: 40px;">
+            <h3>📅 주간 집중도 상세 분석</h3>
+            <span class="section-sub">최근 7일 5분 단위 요약 데이터 기반</span>
         </div>
 
-        <div class="card" style="margin-top: 30px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0;">🎯 일일 집중 목표 달성률</h3>
-                <span style="font-size: 1.2rem; font-weight: 800; color: var(--primary);">75%</span>
-            </div>
-            <div style="background: var(--border); width: 100%; height: 16px; border-radius: 8px; overflow: hidden;">
-                <div id="progress-bar" style="background: var(--primary); width: 75%; height: 100%; transition: width 0.5s ease-in-out;"></div>
-            </div>
-            <p style="font-size: 0.85rem; color: var(--text-sub); margin-top: 10px;">일일 목표 4시간 중 3시간을 완수했습니다.</p>
+        <!-- 로딩 / 에러 / 데이터 없음 상태 -->
+        <div id="weeklyStateBox" class="weekly-state-box">
+            <div class="state-icon">⏳</div>
+            <div>데이터를 불러오는 중입니다...</div>
         </div>
 
-        <div class="card" style="border: 1px dashed var(--primary); background: var(--primary-light); margin-top: 30px;">
-            <h4 style="color: var(--primary); margin-bottom: 15px;">⚙️ 시각화 실시간 수치 조정 패널 (데모 검증용)</h4>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                <div>
-                    <label style="font-size:0.8rem; font-weight:700;">최근 몰입 점수</label>
-                    <input type="range" min="0" max="100" value="88" oninput="updateDemoData('line', this.value)">
+        <!-- 실제 콘텐츠 (API 응답 후 표시) -->
+        <div id="weeklyContent" style="display:none;">
+
+            <!-- 요약 지표 4개 -->
+            <div class="weekly-metric-grid">
+                <div class="weekly-metric-card">
+                    <p class="wm-label">평균 집중도</p>
+                    <p class="wm-val" id="wm-avg">—<span>점</span></p>
+                    <p class="wm-sub">전체 세션 기준</p>
                 </div>
-                <div>
-                    <label style="font-size:0.8rem; font-weight:700;">오늘 집중 비중 (%)</label>
-                    <input type="range" min="0" max="100" value="80" oninput="updateDemoData('ratio', this.value)">
+                <div class="weekly-metric-card">
+                    <p class="wm-label">총 학습 세션</p>
+                    <p class="wm-val" id="wm-count">—<span>회</span></p>
+                    <p class="wm-sub">5분 단위 요약</p>
+                </div>
+                <div class="weekly-metric-card">
+                    <p class="wm-label">졸음 감지 합계</p>
+                    <p class="wm-val" id="wm-drowsy">—<span>회</span></p>
+                    <p class="wm-sub">전체 세션 누적</p>
+                </div>
+                <div class="weekly-metric-card">
+                    <p class="wm-label">자리비움 감지</p>
+                    <p class="wm-val" id="wm-away">—<span>회</span></p>
+                    <p class="wm-sub">전체 세션 누적</p>
                 </div>
             </div>
-        </div>
+
+            <!-- 차트 2열: 일별 평균 + 집중도 분포 -->
+            <div class="weekly-chart-row">
+                <div class="weekly-chart-card">
+                    <p class="wc-title">일별 평균 집중도</p>
+                    <div class="wc-legend">
+                        <span><span class="legend-sq" style="background:#4f7cff"></span>집중도 점수</span>
+                    </div>
+                    <div class="wc-canvas-wrap">
+                        <canvas id="weeklyBarChart" role="img" aria-label="일별 평균 집중도 막대 차트"></canvas>
+                    </div>
+                </div>
+                <div class="weekly-chart-card">
+                    <p class="wc-title">집중도 구간 분포</p>
+                    <div class="wc-legend">
+                        <span><span class="legend-sq" style="background:#639922"></span>고집중 (80+)</span>
+                        <span><span class="legend-sq" style="background:#ba7517"></span>중집중 (50–79)</span>
+                        <span><span class="legend-sq" style="background:#e24b4a"></span>저집중 (~49)</span>
+                    </div>
+                    <div class="wc-canvas-wrap">
+                        <canvas id="weeklyDistChart" role="img" aria-label="집중도 구간별 세션 수 도넛 차트"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 차트: 세션별 추이 풀 폭 -->
+            <div class="weekly-chart-card" style="margin-bottom: 20px;">
+                <p class="wc-title">세션별 집중도 &amp; 이상 이벤트 추이</p>
+                <div class="wc-legend">
+                    <span><span class="legend-sq" style="background:#4f7cff"></span>집중도</span>
+                    <span><span class="legend-sq" style="background:#e24b4a; border-radius:50%"></span>졸음</span>
+                    <span><span class="legend-sq" style="background:#ba7517; border-radius:50%"></span>자리비움</span>
+                </div>
+                <div class="wc-canvas-wrap-wide">
+                    <canvas id="weeklyTimelineChart" role="img" aria-label="세션별 집중도 및 이벤트 추이 라인 차트"></canvas>
+                </div>
+            </div>
+
+            <!-- 세션 상세 테이블 -->
+            <div class="weekly-table-card">
+                <p class="wc-title">세션 상세 기록</p>
+                <table class="session-tbl">
+                    <thead>
+                        <tr>
+                            <th>날짜</th>
+                            <th>시간대</th>
+                            <th>집중도</th>
+                            <th></th>
+                            <th>졸음</th>
+                            <th>자리비움</th>
+                            <th>평가</th>
+                        </tr>
+                    </thead>
+                    <tbody id="weeklySessionRows"></tbody>
+                </table>
+            </div>
+
+        </div><!-- /#weeklyContent -->
+
     </section>
 </div>
 
 <script src="script.js"></script>
+
+<script>
+/* ════════════════════════════════════════════
+   주간 집중도 리포트 — API 연동 및 렌더링
+   ════════════════════════════════════════════ */
+
+// 차트 인스턴스 (재생성 시 destroy 용)
+let chartBar = null, chartDist = null, chartTimeline = null;
+
+function scoreColor(v) {
+    return v >= 80 ? '#639922' : v >= 50 ? '#ba7517' : '#e24b4a';
+}
+
+/* ── 상태 박스 메시지 변경 ── */
+function setStateBox(icon, msg) {
+    document.getElementById('weeklyStateBox').style.display = 'block';
+    document.getElementById('weeklyContent').style.display  = 'none';
+    document.getElementById('weeklyStateBox').innerHTML =
+        `<div class="state-icon">${icon}</div><div>${msg}</div>`;
+}
+
+/* ── 날짜 배지 갱신 ── */
+function updateDateBadge() {
+    const now = new Date();
+    const label = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 기준`;
+    document.getElementById('reportDateBadge').textContent = label;
+}
+
+/* ── 요약 지표 렌더 ── */
+function renderMetrics(summary) {
+    document.getElementById('wm-avg').innerHTML    = summary.avg_score      + '<span>점</span>';
+    document.getElementById('wm-count').innerHTML  = summary.total_sessions + '<span>회</span>';
+    document.getElementById('wm-drowsy').innerHTML = summary.total_drowsy   + '<span>회</span>';
+    document.getElementById('wm-away').innerHTML   = summary.total_away     + '<span>회</span>';
+}
+
+/* ── 차트 렌더 ── */
+function renderCharts(sessions) {
+    // 이전 차트 제거
+    if (chartBar)      { chartBar.destroy();      chartBar = null; }
+    if (chartDist)     { chartDist.destroy();     chartDist = null; }
+    if (chartTimeline) { chartTimeline.destroy(); chartTimeline = null; }
+
+    // 일별 평균 집중도 계산
+    const dailyGroups = {};
+    sessions.forEach(s => {
+        if (!dailyGroups[s.day]) dailyGroups[s.day] = [];
+        dailyGroups[s.day].push(s.score);
+    });
+    const dailyLabels = Object.keys(dailyGroups);
+    const dailyAvgs   = dailyLabels.map(k => {
+        const arr = dailyGroups[k];
+        return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+    });
+
+    // 차트 1: 일별 막대
+    chartBar = new Chart(document.getElementById('weeklyBarChart'), {
+        type: 'bar',
+        data: {
+            labels: dailyLabels,
+            datasets: [{
+                label: '평균 집중도',
+                data: dailyAvgs,
+                backgroundColor: dailyAvgs.map(scoreColor),
+                borderRadius: 6,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { min: 0, max: 110, ticks: { callback: v => v + '점', font: { size: 11 } }, grid: { color: 'rgba(128,128,128,0.12)' } },
+                x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+            }
+        }
+    });
+
+    // 차트 2: 분포 도넛
+    const distCounts = [
+        sessions.filter(s => s.score >= 80).length,
+        sessions.filter(s => s.score >= 50 && s.score < 80).length,
+        sessions.filter(s => s.score < 50).length,
+    ];
+    chartDist = new Chart(document.getElementById('weeklyDistChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['고집중 (80+)', '중집중 (50–79)', '저집중 (~49)'],
+            datasets: [{
+                data: distCounts,
+                backgroundColor: ['#639922', '#ba7517', '#e24b4a'],
+                borderWidth: 3, borderColor: 'transparent',
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            cutout: '62%',
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.raw + '세션' } }
+            }
+        }
+    });
+
+    // 차트 3: 세션 추이 라인
+    chartTimeline = new Chart(document.getElementById('weeklyTimelineChart'), {
+        type: 'line',
+        data: {
+            labels: sessions.map((_, i) => '세션' + (i + 1)),
+            datasets: [
+                {
+                    label: '집중도',
+                    data: sessions.map(s => s.score),
+                    borderColor: '#4f7cff',
+                    backgroundColor: 'rgba(79,124,255,0.08)',
+                    fill: true, tension: 0.35, pointRadius: 5,
+                    pointBackgroundColor: sessions.map(s => scoreColor(s.score)),
+                    yAxisID: 'y',
+                },
+                {
+                    label: '졸음',
+                    data: sessions.map(s => s.drowsy),
+                    borderColor: '#e24b4a', backgroundColor: 'transparent',
+                    borderDash: [4, 3], tension: 0.3, pointRadius: 4,
+                    yAxisID: 'y2',
+                },
+                {
+                    label: '자리비움',
+                    data: sessions.map(s => s.away),
+                    borderColor: '#ba7517', backgroundColor: 'transparent',
+                    borderDash: [2, 4], tension: 0.3, pointRadius: 4,
+                    yAxisID: 'y2',
+                }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y:  { min: 0, max: 115, ticks: { callback: v => v + '점', font: { size: 11 } }, grid: { color: 'rgba(128,128,128,0.12)' } },
+                y2: { position: 'right', min: 0, max: 12, ticks: { callback: v => v + '회', font: { size: 11 } }, grid: { display: false } },
+                x:  { ticks: { font: { size: 10 }, autoSkip: false, maxRotation: 45 }, grid: { display: false } }
+            }
+        }
+    });
+}
+
+/* ── 테이블 렌더 ── */
+function renderTable(sessions) {
+    const tbody = document.getElementById('weeklySessionRows');
+    tbody.innerHTML = '';
+    sessions.forEach(s => {
+        const gradeClass  = s.score >= 80 ? 'badge-good' : s.score >= 50 ? 'badge-mid' : 'badge-bad';
+        const gradeText   = s.score >= 80 ? '우수'       : s.score >= 50 ? '보통'       : '주의';
+        const barColor    = scoreColor(s.score);
+        const drowsyStyle = s.drowsy > 0 ? 'color:#e24b4a; font-weight:700;' : 'color:var(--text-sub);';
+        const awayStyle   = s.away   > 0 ? 'color:#ba7517; font-weight:700;' : 'color:var(--text-sub);';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="font-weight:600">${s.day}</td>
+            <td style="color:var(--text-sub); font-size:0.78rem;">${s.time}</td>
+            <td style="font-weight:700; color:${barColor}">${s.score}점</td>
+            <td><div class="score-bar-bg"><div class="score-bar-fill" style="width:${s.score}%; background:${barColor};"></div></div></td>
+            <td style="${drowsyStyle}">${s.drowsy}회</td>
+            <td style="${awayStyle}">${s.away}회</td>
+            <td><span class="badge ${gradeClass}">${gradeText}</span></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+/* ════════════════════════════════════════════
+   메인: API 호출 → 렌더
+   ════════════════════════════════════════════ */
+async function loadWeeklyReport() {
+    updateDateBadge();
+    setStateBox('⏳', '데이터를 불러오는 중입니다...');
+
+    // JWT 토큰 없으면 로그인 안내
+    if (!Auth.isLoggedIn()) {
+        setStateBox('🔒', '로그인 후 이용할 수 있습니다.');
+        return;
+    }
+
+    try {
+        const res = await Auth.fetch('/api/report/weekly', {
+            method: 'GET'
+        });
+
+        // 토큰 만료 또는 미로그인
+        if (res.status === 401) {
+            setStateBox('🔒', '로그인 후 이용할 수 있습니다.');
+            return;
+        }
+
+        const json = await res.json();
+
+        if (!json.ok) {
+            setStateBox('❌', json.message || '데이터 조회에 실패했습니다.');
+            return;
+        }
+
+        // 데이터 없음
+        if (!json.data || json.data.length === 0) {
+            setStateBox('📭', '최근 7일간 집중 분석 기록이 없습니다.<br>학습을 시작하면 여기에 데이터가 나타납니다.');
+            return;
+        }
+
+        // 정상 렌더
+        document.getElementById('weeklyStateBox').style.display = 'none';
+        document.getElementById('weeklyContent').style.display  = 'block';
+
+        renderMetrics(json.summary);
+        renderCharts(json.data);
+        renderTable(json.data);
+
+    } catch (err) {
+        console.error('[Report] API 호출 실패:', err);
+        setStateBox('🚫', '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');
+    }
+}
+
+// 페이지 로드 시 실행
+document.addEventListener('DOMContentLoaded', loadWeeklyReport);
+</script>
+
 </body>
 </html>
