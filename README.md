@@ -17,8 +17,12 @@ MediaPipe Face Landmarker를 활용하여 얼굴 랜드마크를 추출하고, E
 
 * `ear_detection_local.py`
 
-  * 로컬 환경 졸음 감지 코드
+  * 로컬 환경 EAR 기반 졸음 감지 코드
 
 * `ear_detection_mqtt.py`
 
-  * AWS IoT MQTT 연동 버전
+  * AWS IoT MQTT 연동 EAR 기반 졸음 감지 코드
+
+* `drowsiness_yolo_mqtt.py`
+
+  * YOLO 기반 졸음 감지 및 AWS IoT MQTT 연동 코드
