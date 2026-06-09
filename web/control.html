@@ -6,6 +6,73 @@
     <title>FocusMate | 집중분석</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <style>
+        .score-banner {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .score-card {
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px 20px;
+            text-align: center;
+        }
+        .score-card .s-num {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        .score-card .s-label {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+        .score-card.alert .s-num { color: #ef4444; }
+        .score-card.warning .s-num { color: #f59e0b; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 99px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+        .status-focusing  { background: #dcfce7; color: #166534; }
+        .status-drowsy    { background: #fee2e2; color: #991b1b; }
+        .status-away      { background: #fef3c7; color: #92400e; }
+        .status-starting  { background: var(--border); color: var(--text-sub); }
+
+        .stream-url-box {
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .stream-url-box input {
+            flex: 1;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            background: var(--bg);
+            color: var(--text-main);
+        }
+        .stream-url-box label {
+            font-size: 0.82rem;
+            color: var(--text-sub);
+            white-space: nowrap;
+        }
+    </style>
 </head>
 <body>
 
@@ -15,7 +82,6 @@
         <a href="control.html" style="color: var(--primary); font-weight: 800;">집중분석</a>
         <a href="rank.html">전체랭킹</a>
         <a href="create-group.html">그룹</a>
-
         <div class="user-menu-container">
             <a href="#" id="userTrigger" onclick="toggleUserDropdown(event)" class="user-menu-trigger">👤 님 ▾</a>
             <div class="user-dropdown-box" id="userDropdown">
@@ -37,18 +103,49 @@
 
 <div class="container">
     <section id="control">
-        <div style="margin-bottom: 30px;">
+        <div style="margin-bottom: 20px;">
             <h2>AI 몰입 엔진</h2>
             <p style="color:var(--text-sub)">라즈베리 파이 카메라가 시선과 자세를 실시간 분석합니다.</p>
         </div>
+
+        <!-- 실시간 점수 배너 -->
+        <div class="score-banner">
+            <div class="score-card" id="scoreCard">
+                <div class="s-num" id="scoreNum">-</div>
+                <div class="s-label">집중도 점수</div>
+                <div id="statusBadge" class="status-badge status-starting">대기 중</div>
+            </div>
+            <div class="score-card" id="earCard">
+                <div class="s-num" id="earNum">-</div>
+                <div class="s-label">EAR 값 (눈 개폐 비율)</div>
+                <div style="font-size:0.72rem; color:var(--text-sub); margin-top:6px;">기준: 0.22 이상 정상</div>
+            </div>
+            <div class="score-card" id="faceCard">
+                <div class="s-num" id="faceNum">-</div>
+                <div class="s-label">얼굴 감지 상태</div>
+                <div style="font-size:0.72rem; color:var(--text-sub); margin-top:6px;" id="objectsLabel">감지된 객체 없음</div>
+            </div>
+        </div>
+
+        <!-- ngrok URL 입력 -->
+        <div class="stream-url-box">
+            <label>📡 스트림 주소</label>
+            <input type="text" id="streamUrlInput"
+                   placeholder="https://xxxx.ngrok-free.app"
+                   value="">
+            <button class="btn btn-primary" style="padding:8px 16px; font-size:0.85rem;"
+                    onclick="applyStreamUrl()">적용</button>
+        </div>
+
+        <!-- 카메라 + 로그 -->
         <div class="camera-grid">
             <div class="camera-view" id="camFeed">
                 <p>대기 모드</p>
-                <span style="font-size: 0.8rem; opacity: 0.5;">분석 시작 버튼을 눌러주세요</span>
+                <span style="font-size: 0.8rem; opacity: 0.5;">스트림 주소 입력 후 분석 시작을 눌러주세요</span>
             </div>
             <div class="control-panel">
-                <button class="btn btn-primary" style="background:#1e293b" onclick="startAI()">분석 실행 시작</button>
-                <button class="btn" style="background:#ef4444; color:white;" onclick="stopAI()">완전히 종료</button>
+                <button class="btn btn-primary" style="background:#1e293b" onclick="startAI()">▶ 분석 시작</button>
+                <button class="btn" style="background:#ef4444; color:white;" onclick="stopAI()">■ 종료</button>
                 <div class="log-box" id="systemLog">
                     <span style="color: var(--primary); font-weight: 700;">[SYSTEM LOG]</span> 시스템이 준비되었습니다.
                 </div>
@@ -59,22 +156,157 @@
 
 <script src="script.js"></script>
 <script>
-    // [수정] 회원님의 ngrok 실시간 외부 스트리밍 주소 적용 및 에러 유발 코드 제거
-    function startAI() {
-        const feed = document.getElementById('camFeed');
-        const log = document.getElementById('systemLog');
-        
-        // 1. src 주소를 ngrok 전체 주소로 명확하게 바꿨습니다.
-        // 2. 무한 에러 루프를 만들던 지저분한 onerror 문구는 지우고 안전하게 처리했습니다.
-        feed.innerHTML = `<img src="https://choosy-reproach-squealer.ngrok-free.dev/api/stream" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">`;
-        log.innerHTML = `<span style="color: #3b82f6; font-weight:700;">[SYSTEM LOG]</span> 실시간 AI 분석 스트리밍 시작...`;
+    let scoreInterval = null;
+    let streamBaseUrl = '';
+
+    // ── ngrok URL localStorage에서 불러오기 ──
+    window.addEventListener('DOMContentLoaded', () => {
+        const saved = localStorage.getItem('fm_stream_url');
+        if (saved) {
+            document.getElementById('streamUrlInput').value = saved;
+            streamBaseUrl = saved;
+        }
+    });
+
+    // ── URL 적용 ──
+    function applyStreamUrl() {
+        const input = document.getElementById('streamUrlInput').value.trim().replace(/\/$/, '');
+        if (!input) { alert('스트림 주소를 입력해주세요.'); return; }
+        streamBaseUrl = input;
+        localStorage.setItem('fm_stream_url', input);
+        addLog(`스트림 주소 저장됨: ${input}`, 'info');
     }
-    
+
+    // ── 분석 시작 ──
+    function startAI() {
+        if (!streamBaseUrl) {
+            alert('스트림 주소를 먼저 입력하고 적용 버튼을 눌러주세요.');
+            return;
+        }
+        const feed = document.getElementById('camFeed');
+        const streamUrl = `${streamBaseUrl}/api/stream`;
+
+        feed.innerHTML = `
+            <img id="streamImg" src="${streamUrl}"
+                 style="width:100%; height:100%; object-fit:cover; border-radius:12px;"
+                 onerror="handleStreamError()">
+        `;
+        addLog('실시간 AI 분석 스트리밍 시작...', 'info');
+
+        // 점수 폴링 시작 (2초마다)
+        if (scoreInterval) clearInterval(scoreInterval);
+        scoreInterval = setInterval(() => fetchScore(), 2000);
+        fetchScore();
+    }
+
+    // ── 종료 ──
     function stopAI() {
         const feed = document.getElementById('camFeed');
+        feed.innerHTML = `<p>대기 모드</p><span style="font-size:0.8rem; opacity:0.5;">분석 시작 버튼을 눌러주세요</span>`;
+        if (scoreInterval) { clearInterval(scoreInterval); scoreInterval = null; }
+        resetScoreCards();
+        addLog('분석 프로세스가 종료되었습니다.', 'error');
+    }
+
+    // ── 점수 폴링 ──
+    async function fetchScore() {
+        if (!streamBaseUrl) return;
+        try {
+            const res  = await fetch(`${streamBaseUrl}/score`, { signal: AbortSignal.timeout(3000) });
+            const data = await res.json();
+            updateScoreCards(data);
+        } catch (e) {
+            addLog('라즈베리파이 연결 끊김. 재연결 대기 중...', 'warn');
+        }
+    }
+
+    // ── 점수 카드 업데이트 ──
+    function updateScoreCards(data) {
+        const score  = data.score  ?? '-';
+        const ear    = data.ear    != null ? data.ear.toFixed(3) : '-';
+        const status = data.status ?? 'Starting';
+        const face   = data.face   ?? false;
+        const objs   = data.objects ?? [];
+
+        document.getElementById('scoreNum').textContent = score;
+        document.getElementById('earNum').textContent   = ear;
+        document.getElementById('faceNum').textContent  = face ? '감지됨 ✅' : '미감지 ❌';
+
+        // 객체 목록
+        document.getElementById('objectsLabel').textContent =
+            objs.length ? `감지: ${objs.slice(0,3).join(', ')}` : '감지된 객체 없음';
+
+        // 상태 배지
+        const badge = document.getElementById('statusBadge');
+        badge.textContent = status;
+        badge.className   = 'status-badge ' + getStatusClass(status);
+
+        // 점수 카드 색상
+        const scoreCard = document.getElementById('scoreCard');
+        const earCard   = document.getElementById('earCard');
+        scoreCard.className = 'score-card' + (score < 70 ? ' alert' : score < 90 ? ' warning' : '');
+        earCard.className   = 'score-card' + (parseFloat(ear) < 0.22 ? ' alert' : '');
+
+        addLog(`점수: ${score}pts | EAR: ${ear} | ${status}`, 'data');
+    }
+
+    function getStatusClass(status) {
+        if (status === 'Focusing')           return 'status-focusing';
+        if (status === 'Drowsiness Alert!')  return 'status-drowsy';
+        if (status === 'Out of Sight')       return 'status-away';
+        return 'status-starting';
+    }
+
+    function resetScoreCards() {
+        document.getElementById('scoreNum').textContent  = '-';
+        document.getElementById('earNum').textContent    = '-';
+        document.getElementById('faceNum').textContent   = '-';
+        document.getElementById('statusBadge').textContent = '대기 중';
+        document.getElementById('statusBadge').className   = 'status-badge status-starting';
+        document.getElementById('objectsLabel').textContent = '감지된 객체 없음';
+    }
+
+    // ── 스트림 에러 처리 ──
+    function handleStreamError() {
+        addLog('스트림 연결 실패. 라즈베리파이가 실행 중인지 확인해주세요.', 'error');
+        const img = document.getElementById('streamImg');
+        if (img) {
+            img.style.display = 'none';
+            img.parentElement.innerHTML += `
+                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center;">
+                    <div style="font-size:2rem;">📷</div>
+                    <p style="color:var(--text-sub); font-size:0.85rem; margin-top:8px;">카메라 연결 대기 중...</p>
+                    <button onclick="retryStream()" class="btn btn-primary" style="margin-top:12px; font-size:0.8rem; padding:6px 14px;">재연결</button>
+                </div>
+            `;
+        }
+    }
+
+    function retryStream() {
+        startAI();
+        addLog('스트림 재연결 시도 중...', 'info');
+    }
+
+    // ── 로그 출력 ──
+    const logColors = {
+        info:  '#3b82f6',
+        error: '#ef4444',
+        warn:  '#f59e0b',
+        data:  'var(--primary)',
+    };
+    let logCount = 0;
+    function addLog(msg, type = 'info') {
         const log = document.getElementById('systemLog');
-        feed.innerHTML = `<p>대기 모드</p><span style="font-size: 0.8rem; opacity:0.5;">분석 시작 버튼을 눌러주세요</span>`;
-        log.innerHTML = `<span style="color: #ef4444; font-weight:700;">[SYSTEM LOG]</span> 분석 프로세스가 종료되었습니다.`;
+        const now = new Date().toLocaleTimeString('ko-KR');
+        const color = logColors[type] || logColors.info;
+        const line = `<div><span style="color:${color}; font-weight:700;">[${now}]</span> ${msg}</div>`;
+        log.innerHTML += line;
+        // 최대 20줄 유지
+        logCount++;
+        if (logCount > 20) {
+            log.removeChild(log.firstChild);
+        }
+        log.scrollTop = log.scrollHeight;
     }
 </script>
 </body>
