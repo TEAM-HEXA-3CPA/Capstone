@@ -59,12 +59,17 @@
 
 <script src="script.js"></script>
 <script>
+    // [수정] 회원님의 ngrok 실시간 외부 스트리밍 주소 적용 및 에러 유발 코드 제거
     function startAI() {
         const feed = document.getElementById('camFeed');
         const log = document.getElementById('systemLog');
-        feed.innerHTML = `<img src="/api/stream" style="width:100%; height:100%; object-fit:cover; border-radius:12px;" onerror="this.parentElement.innerHTML='<p>카메라 스트림을 불러올 수 없습니다</p>'">`;
+        
+        // 1. src 주소를 ngrok 전체 주소로 명확하게 바꿨습니다.
+        // 2. 무한 에러 루프를 만들던 지저분한 onerror 문구는 지우고 안전하게 처리했습니다.
+        feed.innerHTML = `<img src="https://choosy-reproach-squealer.ngrok-free.dev/api/stream" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">`;
         log.innerHTML = `<span style="color: #3b82f6; font-weight:700;">[SYSTEM LOG]</span> 실시간 AI 분석 스트리밍 시작...`;
     }
+    
     function stopAI() {
         const feed = document.getElementById('camFeed');
         const log = document.getElementById('systemLog');
