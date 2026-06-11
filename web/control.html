@@ -6,19 +6,22 @@
     <title>FocusMate | 집중분석</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
+        /* ── 점수 배너 ── */
         .score-banner {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 14px;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
         }
         .score-card {
             background: var(--card-bg, #fff);
-            border: 1px solid var(--border);
+            border: 2px solid var(--border);
             border-radius: 16px;
             padding: 18px 20px;
             text-align: center;
+            transition: border-color 0.4s ease, box-shadow 0.4s ease;
         }
         .score-card .s-num {
             font-size: 2rem;
@@ -32,28 +35,90 @@
             color: var(--text-sub);
             font-weight: 600;
         }
-        .score-card.alert .s-num { color: #ef4444; }
-        .score-card.warning .s-num { color: #f59e0b; }
+        .score-card.state-focusing { border-color: #009460 !important; box-shadow: 0 0 0 3px rgba(0,148,96,0.12); }
+        .score-card.state-drowsy   { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.12); }
+        .score-card.state-away     { border-color: #f59e0b !important; box-shadow: 0 0 0 3px rgba(245,158,11,0.12); }
 
         .status-badge {
             display: inline-block;
-            padding: 4px 14px;
+            padding: 3px 12px;
             border-radius: 99px;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 700;
             margin-top: 6px;
         }
-        .status-focusing  { background: #dcfce7; color: #166534; }
-        .status-drowsy    { background: #fee2e2; color: #991b1b; }
-        .status-away      { background: #fef3c7; color: #92400e; }
-        .status-starting  { background: var(--border); color: var(--text-sub); }
+        .status-focusing { background: #dcfce7; color: #166534; }
+        .status-drowsy   { background: #fee2e2; color: #991b1b; }
+        .status-away     { background: #fef3c7; color: #92400e; }
+        .status-starting { background: var(--border); color: var(--text-sub); }
 
+        /* ── 세션 타이머 ── */
+        .session-timer-bar {
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 20px;
+            margin-bottom: 14px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .session-timer-bar.active { display: flex; }
+        .timer-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: blink 1.2s infinite;
+        }
+        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+        .timer-value {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--primary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── 시작/종료 기록 ── */
+        .session-record {
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 20px;
+            margin-bottom: 14px;
+            display: none;
+            align-items: center;
+            gap: 20px;
+            font-size: 0.85rem;
+            color: var(--text-sub);
+        }
+        .session-record.visible { display: flex; }
+        .session-record span strong { color: var(--text-main); }
+
+        /* ── 미니 차트 ── */
+        .mini-chart-box {
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 14px;
+            display: none;
+        }
+        .mini-chart-box.visible { display: block; }
+        .mini-chart-box .chart-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            margin-bottom: 10px;
+        }
+        .mini-chart-box canvas { height: 80px !important; }
+
+        /* ── URL 입력 ── */
         .stream-url-box {
             background: var(--card-bg, #fff);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 14px 16px;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -72,6 +137,39 @@
             color: var(--text-sub);
             white-space: nowrap;
         }
+
+        /* ── 로그 카드 ── */
+        .log-card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 2px;
+        }
+        .log-card {
+            background: var(--bg, #f8fafc);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 0.82rem;
+        }
+        .log-card .lc-time  { color: var(--text-sub); font-size: 0.75rem; white-space: nowrap; }
+        .log-card .lc-score { font-weight: 800; color: var(--primary); white-space: nowrap; }
+        .log-card .lc-status { font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+        .lc-focusing { background: #dcfce7; color: #166534; }
+        .lc-drowsy   { background: #fee2e2; color: #991b1b; }
+        .lc-away     { background: #fef3c7; color: #92400e; }
+        .lc-info     { background: var(--border); color: var(--text-sub); }
+        .log-card .lc-ear   { color: var(--text-sub); font-size: 0.75rem; }
+
+        /* 숫자 팝 */
+        @keyframes numPop { 0%{transform:scale(1);} 50%{transform:scale(1.15);} 100%{transform:scale(1);} }
+        .num-pop { animation: numPop 0.3s ease; }
     </style>
 </head>
 <body>
@@ -103,9 +201,27 @@
 
 <div class="container">
     <section id="control">
-        <div style="margin-bottom: 20px;">
+        <div style="margin-bottom: 16px;">
             <h2>AI 몰입 엔진</h2>
             <p style="color:var(--text-sub)">라즈베리 파이 카메라가 시선과 자세를 실시간 분석합니다.</p>
+        </div>
+
+        <!-- 세션 타이머 -->
+        <div class="session-timer-bar" id="sessionTimerBar">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <div class="timer-dot"></div>
+                <span style="font-size:0.82rem; color:var(--text-sub);">현재 세션 경과</span>
+            </div>
+            <span class="timer-value" id="sessionElapsed">00:00:00</span>
+            <span style="font-size:0.78rem; color:var(--text-sub);" id="sessionStartLabel"></span>
+        </div>
+
+        <!-- 시작/종료 기록 -->
+        <div class="session-record" id="sessionRecord">
+            <span>📅 <strong id="recDate"></strong></span>
+            <span>🟢 시작 <strong id="recStart"></strong></span>
+            <span id="recEndWrap" style="display:none;">🔴 종료 <strong id="recEnd"></strong></span>
+            <span id="recDurWrap" style="display:none;">⏱ 총 <strong id="recDur"></strong></span>
         </div>
 
         <!-- 실시간 점수 배너 -->
@@ -127,11 +243,17 @@
             </div>
         </div>
 
-        <!-- ngrok URL 입력 -->
+        <!-- 미니 차트 -->
+        <div class="mini-chart-box" id="miniChartBox">
+            <div class="chart-title">📈 현재 세션 집중도 변화</div>
+            <canvas id="miniChart"></canvas>
+        </div>
+
+        <!-- URL 입력 -->
         <div class="stream-url-box">
             <label>📡 스트림 주소</label>
             <input type="text" id="streamUrlInput"
-                   placeholder="https://xxxx.ngrok-free.app"
+                   placeholder="https://xxxx.ngrok-free.app  (주소만 입력, /api/stream 제외)"
                    value="">
             <button class="btn btn-primary" style="padding:8px 16px; font-size:0.85rem;"
                     onclick="applyStreamUrl()">적용</button>
@@ -141,13 +263,15 @@
         <div class="camera-grid">
             <div class="camera-view" id="camFeed">
                 <p>대기 모드</p>
-                <span style="font-size: 0.8rem; opacity: 0.5;">스트림 주소 입력 후 분석 시작을 눌러주세요</span>
+                <span style="font-size:0.8rem; opacity:0.5;">스트림 주소 입력 후 분석 시작을 눌러주세요</span>
             </div>
             <div class="control-panel">
                 <button class="btn btn-primary" style="background:#1e293b" onclick="startAI()">▶ 분석 시작</button>
                 <button class="btn" style="background:#ef4444; color:white;" onclick="stopAI()">■ 종료</button>
-                <div class="log-box" id="systemLog">
-                    <span style="color: var(--primary); font-weight: 700;">[SYSTEM LOG]</span> 시스템이 준비되었습니다.
+                <!-- 로그 카드 리스트 -->
+                <div style="background:var(--card-bg,#fff); border:1px solid var(--border); border-radius:12px; padding:12px;">
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-sub); margin-bottom:8px;">기록 로그</div>
+                    <div class="log-card-list" id="logCardList"></div>
                 </div>
             </div>
         </div>
@@ -158,14 +282,23 @@
 <script>
     let scoreInterval = null;
     let streamBaseUrl = '';
+    let sessionTimer  = null;
+    let sessionStart  = null;
+    let prevScore     = null;
+    let prevEar       = null;
+    let miniChart     = null;
+    let chartLabels   = [];
+    let chartData     = [];
+    let logCount      = 0;
 
-    // ── ngrok URL localStorage에서 불러오기 ──
+    // ── 저장된 URL 불러오기 ──
     window.addEventListener('DOMContentLoaded', () => {
         const saved = localStorage.getItem('fm_stream_url');
         if (saved) {
             document.getElementById('streamUrlInput').value = saved;
             streamBaseUrl = saved;
         }
+        initMiniChart();
     });
 
     // ── URL 적용 ──
@@ -174,7 +307,102 @@
         if (!input) { alert('스트림 주소를 입력해주세요.'); return; }
         streamBaseUrl = input;
         localStorage.setItem('fm_stream_url', input);
-        addLog(`스트림 주소 저장됨: ${input}`, 'info');
+        addLog(`스트림 주소 저장됨`, 'info');
+    }
+
+    // ── 미니 차트 초기화 ──
+    function initMiniChart() {
+        const ctx = document.getElementById('miniChart').getContext('2d');
+        miniChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    data: chartData,
+                    borderColor: '#009460',
+                    backgroundColor: 'rgba(0,148,96,0.08)',
+                    fill: true,
+                    tension: 0.35,
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    pointBackgroundColor: '#009460',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: {
+                        min: 0, max: 100,
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        ticks: { font: { size: 9 }, color: '#94a3b8', stepSize: 50 }
+                    }
+                },
+                animation: { duration: 300 }
+            }
+        });
+    }
+
+    // ── 차트에 데이터 추가 ──
+    function addChartPoint(score) {
+        const now = new Date().toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+        chartLabels.push(now);
+        chartData.push(score);
+        if (chartLabels.length > 60) { chartLabels.shift(); chartData.shift(); }
+        miniChart.update('none');
+    }
+
+    // ── 세션 타이머 ──
+    function startSessionTimer() {
+        sessionStart = new Date();
+        document.getElementById('sessionTimerBar').classList.add('active');
+        document.getElementById('sessionStartLabel').textContent =
+            '시작: ' + sessionStart.toLocaleTimeString('ko-KR');
+
+        // 시작/종료 기록
+        const rec = document.getElementById('sessionRecord');
+        rec.classList.add('visible');
+        document.getElementById('recDate').textContent =
+            sessionStart.toLocaleDateString('ko-KR', { month:'long', day:'numeric', weekday:'short' });
+        document.getElementById('recStart').textContent = sessionStart.toLocaleTimeString('ko-KR');
+        document.getElementById('recEndWrap').style.display = 'none';
+        document.getElementById('recDurWrap').style.display = 'none';
+
+        // 미니 차트 표시
+        document.getElementById('miniChartBox').classList.add('visible');
+        chartLabels.length = 0; chartData.length = 0;
+        miniChart.update();
+
+        if (sessionTimer) clearInterval(sessionTimer);
+        sessionTimer = setInterval(() => {
+            const elapsed = Math.floor((new Date() - sessionStart) / 1000);
+            const h = String(Math.floor(elapsed / 3600)).padStart(2,'0');
+            const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2,'0');
+            const s = String(elapsed % 60).padStart(2,'0');
+            document.getElementById('sessionElapsed').textContent = `${h}:${m}:${s}`;
+        }, 1000);
+    }
+
+    function stopSessionTimer() {
+        if (sessionTimer) { clearInterval(sessionTimer); sessionTimer = null; }
+        document.getElementById('sessionTimerBar').classList.remove('active');
+
+        if (sessionStart) {
+            const endTime = new Date();
+            const elapsed = Math.floor((endTime - sessionStart) / 1000);
+            const h = Math.floor(elapsed / 3600);
+            const m = Math.floor((elapsed % 3600) / 60);
+            const s = elapsed % 60;
+            const durStr = h > 0 ? `${h}시간 ${m}분` : m > 0 ? `${m}분 ${s}초` : `${s}초`;
+
+            document.getElementById('recEnd').textContent    = endTime.toLocaleTimeString('ko-KR');
+            document.getElementById('recDur').textContent    = durStr;
+            document.getElementById('recEndWrap').style.display = '';
+            document.getElementById('recDurWrap').style.display = '';
+        }
+        prevScore = null; prevEar = null;
     }
 
     // ── 분석 시작 ──
@@ -183,20 +411,19 @@
             alert('스트림 주소를 먼저 입력하고 적용 버튼을 눌러주세요.');
             return;
         }
+        const base = streamBaseUrl.replace(/\/api\/stream$/, '').replace(/\/$/, '');
         const feed = document.getElementById('camFeed');
-        const streamUrl = `${streamBaseUrl}/api/stream`;
-
         feed.innerHTML = `
-            <img id="streamImg" src="${streamUrl}"
+            <img id="streamImg" src="${base}/api/stream"
                  style="width:100%; height:100%; object-fit:cover; border-radius:12px;"
-                 onerror="handleStreamError()">
-        `;
-        addLog('실시간 AI 분석 스트리밍 시작...', 'info');
+                 onerror="handleStreamError()">`;
 
-        // 점수 폴링 시작 (2초마다)
+        addLog('분석 스트리밍 시작', 'info');
+        startSessionTimer();
+
         if (scoreInterval) clearInterval(scoreInterval);
-        scoreInterval = setInterval(() => fetchScore(), 2000);
-        fetchScore();
+        scoreInterval = setInterval(() => fetchScore(base), 2000);
+        fetchScore(base);
     }
 
     // ── 종료 ──
@@ -204,109 +431,138 @@
         const feed = document.getElementById('camFeed');
         feed.innerHTML = `<p>대기 모드</p><span style="font-size:0.8rem; opacity:0.5;">분석 시작 버튼을 눌러주세요</span>`;
         if (scoreInterval) { clearInterval(scoreInterval); scoreInterval = null; }
+        stopSessionTimer();
         resetScoreCards();
-        addLog('분석 프로세스가 종료되었습니다.', 'error');
+        addLog('분석 종료', 'stop');
     }
 
     // ── 점수 폴링 ──
-    async function fetchScore() {
-        if (!streamBaseUrl) return;
+    async function fetchScore(base) {
+        if (!base) return;
         try {
-            const res  = await fetch(`${streamBaseUrl}/score`, { signal: AbortSignal.timeout(3000) });
+            const res  = await fetch(`${base}/score`, { signal: AbortSignal.timeout(3000) });
             const data = await res.json();
             updateScoreCards(data);
         } catch (e) {
-            addLog('라즈베리파이 연결 끊김. 재연결 대기 중...', 'warn');
+            addLog('연결 대기 중...', 'warn');
         }
     }
 
     // ── 점수 카드 업데이트 ──
     function updateScoreCards(data) {
-        const score  = data.score  ?? '-';
-        const ear    = data.ear    != null ? data.ear.toFixed(3) : '-';
+        const score  = data.score  ?? 0;
+        const ear    = data.ear    != null ? data.ear : 0;
         const status = data.status ?? 'Starting';
         const face   = data.face   ?? false;
         const objs   = data.objects ?? [];
 
-        document.getElementById('scoreNum').textContent = score;
-        document.getElementById('earNum').textContent   = ear;
-        document.getElementById('faceNum').textContent  = face ? '감지됨 ✅' : '미감지 ❌';
+        // 카운트업 애니메이션
+        if (prevScore !== null && prevScore !== score) {
+            animateNumber('scoreNum', prevScore, score, false);
+        } else {
+            document.getElementById('scoreNum').textContent = score;
+        }
+        if (prevEar !== null && Math.abs(prevEar - ear) > 0.005) {
+            animateNumber('earNum', prevEar, ear, true);
+        } else {
+            document.getElementById('earNum').textContent = ear.toFixed(3);
+        }
+        prevScore = score; prevEar = ear;
 
-        // 객체 목록
+        document.getElementById('faceNum').textContent = face ? '감지됨 ✅' : '미감지 ❌';
         document.getElementById('objectsLabel').textContent =
             objs.length ? `감지: ${objs.slice(0,3).join(', ')}` : '감지된 객체 없음';
 
         // 상태 배지
         const badge = document.getElementById('statusBadge');
         badge.textContent = status;
-        badge.className   = 'status-badge ' + getStatusClass(status);
+        badge.className = 'status-badge ' + getStatusClass(status);
 
-        // 점수 카드 색상
-        const scoreCard = document.getElementById('scoreCard');
-        const earCard   = document.getElementById('earCard');
-        scoreCard.className = 'score-card' + (score < 70 ? ' alert' : score < 90 ? ' warning' : '');
-        earCard.className   = 'score-card' + (parseFloat(ear) < 0.22 ? ' alert' : '');
+        // 카드 테두리
+        const stateClass = status === 'Focusing' ? 'state-focusing'
+                         : status === 'Drowsiness Alert!' ? 'state-drowsy'
+                         : status === 'Out of Sight' ? 'state-away' : '';
+        ['scoreCard','earCard','faceCard'].forEach(id => {
+            document.getElementById(id).className = 'score-card ' + stateClass;
+        });
 
-        addLog(`점수: ${score}pts | EAR: ${ear} | ${status}`, 'data');
+        // 미니 차트
+        addChartPoint(score);
+
+        // 로그 카드
+        addLog(`${score}pts  EAR ${ear.toFixed(3)}`, status === 'Focusing' ? 'focusing'
+             : status === 'Drowsiness Alert!' ? 'drowsy'
+             : status === 'Out of Sight' ? 'away' : 'info');
     }
 
     function getStatusClass(status) {
-        if (status === 'Focusing')           return 'status-focusing';
-        if (status === 'Drowsiness Alert!')  return 'status-drowsy';
-        if (status === 'Out of Sight')       return 'status-away';
+        if (status === 'Focusing')          return 'status-focusing';
+        if (status === 'Drowsiness Alert!') return 'status-drowsy';
+        if (status === 'Out of Sight')      return 'status-away';
         return 'status-starting';
     }
 
     function resetScoreCards() {
-        document.getElementById('scoreNum').textContent  = '-';
-        document.getElementById('earNum').textContent    = '-';
-        document.getElementById('faceNum').textContent   = '-';
+        ['scoreNum','earNum','faceNum'].forEach(id => {
+            document.getElementById(id).textContent = '-';
+        });
         document.getElementById('statusBadge').textContent = '대기 중';
-        document.getElementById('statusBadge').className   = 'status-badge status-starting';
+        document.getElementById('statusBadge').className = 'status-badge status-starting';
         document.getElementById('objectsLabel').textContent = '감지된 객체 없음';
+        ['scoreCard','earCard','faceCard'].forEach(id => {
+            document.getElementById(id).className = 'score-card';
+        });
     }
 
-    // ── 스트림 에러 처리 ──
+    // ── 카운트업 애니메이션 ──
+    function animateNumber(elId, from, to, isFloat, duration = 350) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        const start = performance.now();
+        const update = (now) => {
+            const p    = Math.min((now - start) / duration, 1);
+            const ease = 1 - Math.pow(1 - p, 3);
+            const cur  = from + (to - from) * ease;
+            el.textContent = isFloat ? cur.toFixed(3) : Math.round(cur);
+            if (p < 1) requestAnimationFrame(update);
+            else el.textContent = isFloat ? to.toFixed(3) : to;
+        };
+        requestAnimationFrame(update);
+        el.classList.remove('num-pop');
+        void el.offsetWidth;
+        el.classList.add('num-pop');
+        setTimeout(() => el.classList.remove('num-pop'), 300);
+    }
+
+    // ── 스트림 에러 ──
     function handleStreamError() {
-        addLog('스트림 연결 실패. 라즈베리파이가 실행 중인지 확인해주세요.', 'error');
-        const img = document.getElementById('streamImg');
-        if (img) {
-            img.style.display = 'none';
-            img.parentElement.innerHTML += `
-                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center;">
-                    <div style="font-size:2rem;">📷</div>
-                    <p style="color:var(--text-sub); font-size:0.85rem; margin-top:8px;">카메라 연결 대기 중...</p>
-                    <button onclick="retryStream()" class="btn btn-primary" style="margin-top:12px; font-size:0.8rem; padding:6px 14px;">재연결</button>
-                </div>
-            `;
-        }
+        addLog('카메라 연결 실패. 재연결 대기 중...', 'warn');
     }
 
-    function retryStream() {
-        startAI();
-        addLog('스트림 재연결 시도 중...', 'info');
-    }
-
-    // ── 로그 출력 ──
-    const logColors = {
-        info:  '#3b82f6',
-        error: '#ef4444',
-        warn:  '#f59e0b',
-        data:  'var(--primary)',
+    // ── 로그 카드 추가 ──
+    const logStatusMap = {
+        focusing: { cls: 'lc-focusing', label: 'Focusing' },
+        drowsy:   { cls: 'lc-drowsy',   label: 'Drowsy' },
+        away:     { cls: 'lc-away',     label: 'Out of Sight' },
+        info:     { cls: 'lc-info',     label: 'INFO' },
+        warn:     { cls: 'lc-info',     label: 'WARN' },
+        stop:     { cls: 'lc-info',     label: 'STOP' },
     };
-    let logCount = 0;
+
     function addLog(msg, type = 'info') {
-        const log = document.getElementById('systemLog');
+        const list = document.getElementById('logCardList');
+        if (!list) return;
         const now = new Date().toLocaleTimeString('ko-KR');
-        const color = logColors[type] || logColors.info;
-        const line = `<div><span style="color:${color}; font-weight:700;">[${now}]</span> ${msg}</div>`;
-        log.innerHTML += line;
-        // 최대 20줄 유지
+        const s   = logStatusMap[type] || logStatusMap.info;
+        const card = document.createElement('div');
+        card.className = 'log-card';
+        card.innerHTML = `
+            <span class="lc-time">${now}</span>
+            <span style="flex:1; color:var(--text-main); font-size:0.82rem;">${msg}</span>
+            <span class="lc-status ${s.cls}">${s.label}</span>`;
+        list.insertBefore(card, list.firstChild);
         logCount++;
-        if (logCount > 20) {
-            log.removeChild(log.firstChild);
-        }
-        log.scrollTop = log.scrollHeight;
+        if (logCount > 30) list.removeChild(list.lastChild);
     }
 </script>
 </body>
