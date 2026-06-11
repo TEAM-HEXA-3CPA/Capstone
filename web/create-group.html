@@ -129,9 +129,8 @@ if (!sessionStorage.getItem('_grpChk')) {
         const btn = document.querySelector('#create-group button[type=submit]');
         if (btn) { btn.disabled = true; btn.textContent = '개설 중...'; }
         try {
-            const res  = await fetch('/api/groups/create', {
+            const res  = await Auth.fetch('/api/groups/create', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, password })
             });
             const data = await res.json();
