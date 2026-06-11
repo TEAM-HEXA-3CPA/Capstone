@@ -138,34 +138,7 @@
             white-space: nowrap;
         }
 
-        /* ── 로그 카드 ── */
-        .log-card-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            max-height: 220px;
-            overflow-y: auto;
-            padding: 2px;
-        }
-        .log-card {
-            background: var(--bg, #f8fafc);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 8px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            font-size: 0.82rem;
-        }
-        .log-card .lc-time  { color: var(--text-sub); font-size: 0.75rem; white-space: nowrap; }
-        .log-card .lc-score { font-weight: 800; color: var(--primary); white-space: nowrap; }
-        .log-card .lc-status { font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
-        .lc-focusing { background: #dcfce7; color: #166534; }
-        .lc-drowsy   { background: #fee2e2; color: #991b1b; }
-        .lc-away     { background: #fef3c7; color: #92400e; }
-        .lc-info     { background: var(--border); color: var(--text-sub); }
-        .log-card .lc-ear   { color: var(--text-sub); font-size: 0.75rem; }
+
 
         /* 숫자 팝 */
         @keyframes numPop { 0%{transform:scale(1);} 50%{transform:scale(1.15);} 100%{transform:scale(1);} }
@@ -268,10 +241,27 @@
             <div class="control-panel">
                 <button class="btn btn-primary" style="background:#1e293b" onclick="startAI()">▶ 분석 시작</button>
                 <button class="btn" style="background:#ef4444; color:white;" onclick="stopAI()">■ 종료</button>
-                <!-- 로그 카드 리스트 -->
-                <div style="background:var(--card-bg,#fff); border:1px solid var(--border); border-radius:12px; padding:12px;">
-                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-sub); margin-bottom:8px;">기록 로그</div>
-                    <div class="log-card-list" id="logCardList"></div>
+                <!-- 데이터 전송 안내 -->
+                <div style="background:var(--card-bg,#fff); border:1px solid var(--border); border-radius:12px; padding:16px 18px;">
+                    <div style="font-size:0.78rem; font-weight:700; color:var(--text-sub); margin-bottom:10px; letter-spacing:0.04em;">📡 데이터 전송 안내</div>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:#009460; flex-shrink:0;"></span>
+                            <span style="font-size:0.82rem; color:var(--text-main);">집중도 점수 · EAR 값 <strong style="color:var(--primary);">5초</strong>마다 AWS IoT Core 전송</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:#0284c7; flex-shrink:0;"></span>
+                            <span style="font-size:0.82rem; color:var(--text-main);">집중도 세션 요약 <strong style="color:#0284c7;">5분</strong>마다 DB 자동 저장</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:#7c3aed; flex-shrink:0;"></span>
+                            <span style="font-size:0.82rem; color:var(--text-main);">리포트 페이지에서 <strong style="color:#7c3aed;">실시간</strong> 확인 가능</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:#f59e0b; flex-shrink:0;"></span>
+                            <span style="font-size:0.82rem; color:var(--text-main);">졸음·이탈 감지 시 <strong style="color:#f59e0b;">즉시</strong> 이벤트 기록</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -489,10 +479,6 @@
         // 미니 차트
         addChartPoint(score);
 
-        // 로그 카드
-        addLog(`${score}pts  EAR ${ear.toFixed(3)}`, status === 'Focusing' ? 'focusing'
-             : status === 'Drowsiness Alert!' ? 'drowsy'
-             : status === 'Out of Sight' ? 'away' : 'info');
     }
 
     function getStatusClass(status) {
@@ -539,30 +525,9 @@
         addLog('카메라 연결 실패. 재연결 대기 중...', 'warn');
     }
 
-    // ── 로그 카드 추가 ──
-    const logStatusMap = {
-        focusing: { cls: 'lc-focusing', label: 'Focusing' },
-        drowsy:   { cls: 'lc-drowsy',   label: 'Drowsy' },
-        away:     { cls: 'lc-away',     label: 'Out of Sight' },
-        info:     { cls: 'lc-info',     label: 'INFO' },
-        warn:     { cls: 'lc-info',     label: 'WARN' },
-        stop:     { cls: 'lc-info',     label: 'STOP' },
-    };
-
+    // ── 로그 (사용 안 함, 콘솔만) ──
     function addLog(msg, type = 'info') {
-        const list = document.getElementById('logCardList');
-        if (!list) return;
-        const now = new Date().toLocaleTimeString('ko-KR');
-        const s   = logStatusMap[type] || logStatusMap.info;
-        const card = document.createElement('div');
-        card.className = 'log-card';
-        card.innerHTML = `
-            <span class="lc-time">${now}</span>
-            <span style="flex:1; color:var(--text-main); font-size:0.82rem;">${msg}</span>
-            <span class="lc-status ${s.cls}">${s.label}</span>`;
-        list.insertBefore(card, list.firstChild);
-        logCount++;
-        if (logCount > 30) list.removeChild(list.lastChild);
+        console.log(`[${type}] ${msg}`);
     }
 </script>
 </body>
